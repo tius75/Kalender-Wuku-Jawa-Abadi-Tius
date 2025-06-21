@@ -1969,7 +1969,8 @@
   
   if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/Kalender-Wuku-Jawa-Abadi-Tius/sw.js')
+                navigator.serviceWorker.register('./sw.js')
+
                     .then(reg => {
                         console.log('Service Worker registered! Scope:', reg.scope);
                     })
