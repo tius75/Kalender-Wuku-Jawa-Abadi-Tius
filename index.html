@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kalender Jawa dan Wuku Abadi</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#D30000">
+
+  <link rel="apple-touch-icon" href="logo192.png">
+
+  <link rel="icon" type="image/png" href="favicon32.png">
+
+  <style>
+    /* ... (kode CSS Anda yang sudah ada) ... */
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f8ff;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    #mainApp {
+      max-width: 768px;
+      width: 100%;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .filter-container {
+      background-color: #D30000;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px 12px 0 0;
+      border-bottom: 1px solid #d1e0e0;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .mobile-header h2 {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 1.8em;
+    }
+    
+    .search-date-container {
+        padding: 0 20px;
+        box-sizing: border-box;
+        margin-bottom: 15px;
+    }
+    .search-container {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        margin-right: 1px;
+    }
+    .search-container input[type="text"] {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px 0 0 6px;
+        color: #333;
+        font-size: 1em;
+    }
+    .search-icon {
+        background-color: #d1e0e0;
+        color: #555;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-left: none;
+        border-radius: 0 6px 6px 0;
+        cursor: pointer;
+    }
+    .input-date {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+    .input-date input[type="date"],
+    .input-date input[type="time"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        color: #333;
+        width: auto;
+        flex-grow: 1;
+        font-size: 1em;
+    }
+     .input-date button {
+        padding: 10px 15px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+        flex-grow: 0;
+        max-width: 100px;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-top: none;
+      width: 100%;
+      max-width: 768px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 0 0 12px 12px;
+      box-sizing: border-box;
+      overflow-x: auto;
+    }
+
+    .day {
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #ffff;
+        font-weight: 900;
+      border-right: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+      color: #555;
+      font-size: 0.95em;
+      box-sizing: border-box;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .day:last-child {
+      border-right: none;
+    }
+  /* Warna kuning di hari "today" dikasih tebal */
+.today {
+    background-color: #FFFF00;*/ /* Warna kuning untuk hari ini */
+    font-weight: bold; *//* Membuat teks lebih tebal untuk hari ini */
+}
+
+/* Sesuaikan ukuran font header hari agar tidak terlalu besar di mobile */
+.header {
+      font-weight: 900;
+      background: #f8f8f8;
+      color: #333;
+      border-right: 1px solid #eee;
+      border-bottom: 1px solid #ddd;
+      padding: 12px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    .header.sunday, .day.sunday {
+      color: #dc143c;
+    }
+
+/* Media queries untuk penyesuaian lebih lanjut pada ukuran layar yang sangat kecil */
+@media (max-width: 768px) {
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 0.9em;
+    font-weight: bold;
+  }
+
+  .calendar > div {
+    text-align: center;
+    padding: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip; /* biar tidak jadi ... */
+    font-size: clamp(0.7em, 2vw, 0.9em); /* fleksibel tergantung lebar layar */
+  }
+}
+
+      .day, .header {
+        padding: 6px;
+      }
+    }
+
+    .nav {
+      text-align: center;
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 100%;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    .nav button {
+      padding: 10px 15px;
+      margin: 0;
+      background: #e7f5ff;
+      border: 1px solid #bde0fe;
+      font-size: 1em;
+      color: #007bff;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+}
+    
+      .day:last-child { border-right: none; }
+    .day:nth-child(7n) { border-right: none; } /* Remove border for last day of each week */
+    .calendar > div:nth-child(n+8):nth-child(-n+14) .day, /* First full week */
+    .calendar > div:nth-child(n+15):nth-child(-n+21) .day, /* Second full week */
+    .calendar > div:nth-child(n+22):nth-child(-n+28) .day, /* Third full week */
+    .calendar > div:nth-child(n+29):nth-child(-n+35) .day {
+        /* Target full weeks to potentially remove bottom border if needed for elegance */
+        /* border-bottom: none;  You can uncomment this if you prefer no bottom border for full weeks */
+    }
+    .calendar > div:nth-last-child(-n+7) .day {
+        border-bottom: none; /* Ensure no bottom border for the last week */
+    }
+
+    .sunday { color: #dc143c; } /* Crimson for Sundays */
+    .header { font-weight: 600; background: #f8f8f8; color: #333; border-right: 1px solid #eee; border-bottom: 1px solid #ddd; padding: 12px; box-sizing: border-box; font-size: 1em; } /* Light grey header */
+    .header.sunday { color: #dc143c; }
+    .pasaran-label { font-size: 0.85em; color: #777; display: block; margin-top: 3px; }
+    #detail { margin-top: 20px; background: #fff; padding: 20px; border: 1px solid #d1e0e0; display: none; grid-template-columns: 1fr; gap: 15px; max-width: 100%; margin: 15px auto 0; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); box-sizing: border-box; }
+    #detail h3 { text-align: center; grid-column: 1 / -1; color: #333; margin-bottom: 15px; font-weight: 500; }
+    #detail ul { list-style-type: none; padding: 0; margin: 0; grid-column: 1 / -1; }
+    #detail li { margin-bottom: 10px; color: #555; font-size: 0.9em; }
+    #detail li strong { font-weight: bold; color: #333; }
+    .nav { text-align: center; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; max-width: 100%; padding: 0 20px; box-sizing: border-box; }
+    .nav button { padding: 10px 15px; margin: 0; background: #e7f5ff; border: 1px solid #bde0fe; font-size: 1em; color: #007bff; cursor: pointer; border-radius: 6px; transition: background-color 0.3s ease; }
+    .nav button:hover { background-color: #bde0fe; }
+    #monthYearNav { text-align: center; font-size: 1.4em; color: #333; font-weight: 500; flex-grow: 1; }
+    .input-date { margin-top: 20px; text-align: center; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; max-width: 100%; padding: 0 20px; box-sizing: border-box; }
+    .input-date label { display: none; }
+    .input-date input[type="date"], .input-date input[type="time"] {
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        color: #333;
+        width: auto;
+        flex-grow: 1;
+        box-sizing: border-box;
+    }
+    .input-date button {
+        padding: 10px 15px;
+        font-size: 1em;
+        border: none;
+        background-color: #5f9ea0;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        flex-grow: 0;
+        max-width: 120px;
+    }
+    .wa-share, .copy-detail { margin-top: 15px; display: inline-block; background: #25D366; color: white; padding: 12px 18px; text-decoration: none; border-radius: 8px; margin-right: 10px;}
+    .copy-detail { background-color: #007bff; cursor: pointer; }
+    .today { background-color: #ffff00; } /* Light yellow for today */
+    .pancatan { border: 3px solid #388e3c !important; } /* Forest green for Pancatan */
+    #pancatan-results { margin-top: 25px; max-width: 100%; margin: 0 auto; padding: 15px; background: #f8f8f8; border-radius: 8px; border: 1px solid #eee; box-sizing: border-box; }
+    #pancatan-results h3 { color: #333; margin-top: 0; font-weight: 500; margin-bottom: 10px; text-align: center; }
+    #pancatan-results p { color: #555; font-size: 0.9em; margin-bottom: 8px; }
+    #pancatan-results hr { border: 0; border-top: 1px solid #ddd; margin: 10px 0; }
+    .calculator-section { margin-top: 30px; background: #fff; padding: 20px; border: 1px solid #d1e0e0; max-width: 100%; margin: 15px auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); box-sizing: border-box; }
+    .calculator-section h3 { text-align: center; margin-bottom: 20px; color: #333; font-weight: 500; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 8px; color: #555; font-size: 0.95em; }
+    .form-group input[type="date"] { width: calc(100% - 20px); padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; color: #333; font-size: 1em; }
+    #numerology-result { margin-top: 15px; font-weight: bold; color: #333; font-size: 1em; text-align: center; }
+    #tarot-result { margin-top: 15px; text-align: center; font-style: italic; color: #777; font-size: 1em; }
+    #tarot-explanation { margin-top: 10px; font-size: 0.85em; color: #777; text-align: center; }
+    .ramalan-mesir { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; grid-column: 1 / -1; color: #555; font-size: 0.9em; }
+    .wuku-detail { grid-column: 1 / -1; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; color: #555; font-size: 0.9em; }
+    .wuku-detail h4 { margin-bottom: 10px; color: #333; font-weight: 500; }
+    .wuku-detail p { margin-top: 0; word-break: break-word; line-height: 1.6; }
+    /* Style dari kode pertama */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+        font-size: 0.9em;
+        color: #555;
+    }
+    th {
+        background-color: #f8f8f8;
+        font-weight: bold;
+        color: #333;
+    }
+    .button {
+        margin: 15px 0;
+    }
+    #result {
+        background-color: #d7e3fc;
+        padding: 15px;
+        border-radius: 8px;
+        display: none; /* Hide the initial result div */
+    }
+    .neptu-detail {
+        grid-column: 1 / -1;
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+    .neptu-value-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    .neptu-value-table, .neptu-value-table th, .neptu-value-table td {
+        border: 1px solid #ddd;
+    }
+    .neptu-value-table th, .neptu-value-table td {
+        padding: 10px;
+        text-align: left;
+        font-size: 0.9em;
+        color: #555;
+    }
+    .selamatan-section {
+        grid-column: 1 / -1;
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+    .selamatan-section h4 {
+        margin-bottom: 15px;
+        color: #333;
+        font-weight: 500;
+    }
+    .selamatan-form {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .selamatan-form > label {
+        color: #555;
+        font-size: 0.95em;
+    }
+    .selamatan-form select,
+    .selamatan-form input[type="date"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        color: #333;
+        font-size: 1em;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .selamatan-form button {
+        grid-column: 1 / -1;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+    #hasilSelamatan {
+        margin-top: 15px;
+        color: #555;
+        font-size: 0.9em;
+        line-height: 1.6;
+    }
+    #hasilSelamatan h4 {
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+    #scrollTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 99;
+        font-size: 18px;
+        border: none;
+        outline: none;
+        background-color: #3B5998;
+        color: white;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: 10px;
+    }
+    #scrollTopBtn:hover {
+        background-color: #333;
+    }
+    .searched-day {
+        background-color: #e0ffff !important; /* Light Cyan for searched day */
+        color: #008b8b !important; /* Dark Cyan text */
+        font-weight: 600 !important;
+    }
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+
+
+<div id="mainApp" class="hidden">
+    <div class="filter-container">
+        <div class="mobile-header">
+            <h2>Kalender Jawa Dan Wuku Abadi</h2> <h2 id="monthYear"></h2>
+        </div>
+        <div class="search-date-container">
+<div class="search-date-container">
+    <div class="input-date">
+        <input type="date" id="dateInput" />
+        <input type="time" id="timeInput" value="" />
+        <button onclick="searchDate()">Cari</button>
+    </div>
+</div>
+
+
+        </div>
+    </div>
+
+    <div class="nav">
+        <button onclick="changeMonth(-1)">&#x25C0; </button>
+        <span id="monthYearNav"></span> <button onclick="changeMonth(1)">&#x25B6;</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div id="detail"></div>
+    <div id="pancatan-results"></div>
+
+    <footer style="text-align:center; margin-top: 30px; font-size: 0.9em; color: #555;">By Tius</footer>
+    </div>
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        const neptuHari = { "Minggu": 5, "Senin": 4, "Selasa": 3, "Rabu": 7, "Kamis": 8, "Jumat": 6, "Sabtu": 9 };
+        const neptuPasaran = { "Legi": 5, "Pahing": 9, "Pon": 7, "Wage": 4, "Kliwon": 8 };
+
+        const neptuValues = {
+            7: [
+                { age: "0 - 6 tahun", value: 4 },
+                { age: "7 - 12 tahun", value: 1 },
+                { age: "13 - 18 tahun", value: 4 },
+                { age: "19 - 24 tahun", value: 1 },
+                { age: "25 - 30 tahun", value: 0 },
+                { age: "31 - 36 tahun", value: 2 },
+                { age: "37 - 42 tahun", value: 2 }
+            ],
+            8: [
+                { age: "0 - 6 tahun", value: 4 },
+                { age: "7 - 12 tahun", value: 1 },
+                { age: "13 - 18 tahun", value: 0 },
+                { age: "19 - 24 tahun", value: 1 },
+                { age: "25 - 30 tahun", value: 3 },
+                { age: "31 - 36 tahun", value: 3 },
+                { age: "37 - 42 tahun", value: 0 },
+                { age: "43 - 48 tahun", value: 7 }
+            ],
+            9: [
+                { age: "0 - 6 tahun", value: 2 },
+                { age: "7 - 12 tahun", value: 5 },
+                { age: "13 - 18 tahun", value: 1 },
+                { age: "19 - 24 tahun", value: 0 },
+                { age: "25 - 30 tahun", value: 4 },
+                { age: "31 - 36 tahun", value: 1 },
+                { age: "37 - 42 tahun", value: 4 },
+                { age: "43 - 48 tahun", value: 0 },
+                { age: "49 - 54 tahun", value: 1 }
+            ],
+            10: [
+                { age: "0 - 6 tahun", value: 1 },
+                { age: "7 - 12 tahun", value: 0 },
+                { age: "13 - 18 tahun", value: 4 },
+                { age: "19 - 24 tahun", value: 1 },
+                { age: "25 - 30 tahun", value: 1 },
+                { age: "31 - 36 tahun", value: 3 },
+                { age: "37 - 42 tahun", value: 0 },
+                { age: "43 - 48 tahun", value: 0 },
+                { age: "49 - 54 tahun", value: 4 },
+                { age: "55 - 60 tahun", value: 4 }
+            ],
+            11: [
+                { age: "0 - 6 tahun", value: 2 },
+                { age: "7 - 12 tahun", value: 4},
+                { age: "13 - 18 tahun", value: 1 },
+                { age: "19 - 24 tahun", value: 1 },
+                { age: "25 - 30 tahun", value: 8 },
+                { age: "31 - 36 tahun", value: 1 },
+                { age: "37 - 42 tahun", value: 0 },
+                { age: "43 - 48 tahun", value: 1},
+                { age: "49 - 54 tahun", value: 2},
+                { age: "55 - 60 tahun", value: 0},
+                { age: "61 - 66 tahun", value: 2}
+            ],
+            12: [
+                { age: "0 - 6 tahun", value: 0},
+                { age: "7 - 12 tahun", value: 5},
+                { age: "13 - 18 tahun", value: 1 },
+                { age: "19 - 24 tahun", value: 0},
+                { age: "25 - 30 tahun", value: 4},
+                { age: "31 - 36 tahun", value: 0 },
+                { age: "37 - 42 tahun", value: 1 },
+                { age: "43 - 48 tahun", value: 0},
+                { age: "49 - 54 tahun", value: 1},
+                { age: "55 - 60 tahun", value: 4},
+                { age: "61 - 66 tahun", value: 4},
+                { age: "67 - 72 tahun", value: 0}
+            ],
+            13: [
+                { age: "0 - 6 tahun", value: 3},
+                { age: "7 - 12 tahun", value: 1},
+                { age: "13 - 18 tahun", value: 0 },
+                { age: "19 - 24 tahun", value: 5},
+                { age: "25 - 30 tahun", value: 0},
+                { age: "31 - 36 tahun", value: 1 },
+                { age: "37 - 42 tahun", value: 1 },
+                { age: "43 - 48 tahun", value: 5},
+                { age: "49 - 54 tahun", value: 2},
+                { age: "55 - 60 tahun", value: 0},
+                { age: "61 - 66 tahun", value: 1},
+                { age: "67 - 72 tahun", value: 2},
+                { age: "73 - 78 tahun", value: 5}
+            ],
+            14: [
+                { age: "0 - 6 tahun", value: 1},
+                { age: "7 - 12 tahun", value: 0},
+                { age: "13 - 18 tahun", value: 1},
+                { age: "19 - 24 tahun", value: 4},
+                { age: "25 - 30 tahun", value: 0},
+                { age: "31 - 36 tahun", value: 0},
+                { age: "37 - 42 tahun", value: 4},
+                { age: "43 - 48 tahun", value: 4},
+                { age: "49 - 54 tahun", value: 1},
+                { age: "55 - 60 tahun", value: 4},
+                { age: "61 - 66 tahun", value: 0},
+                { age: "67 - 72 tahun", value: 1},
+                { age: "73 - 78 tahun", value: 4},
+                { age: "73 - 78 tahun", value: 4}
+            ],
+            15: [
+                { age: "0 - 6 tahun", value: 2},
+                { age: "7 - 12 tahun", value: 0},
+                { age: "13 - 18 tahun", value: 1},
+                { age: "19 - 24 tahun", value: 1},
+                { age: "25 - 30 tahun", value: 5},
+                { age: "31 - 36 tahun", value: 2},
+                { age: "37 - 42 tahun", value: 0},
+                { age: "43 - 48 tahun", value: 2},
+                { age: "49 - 54 tahun", value: 2},
+                { age: "55 - 60 tahun", value: 5},
+                { age: "61 - 66 tahun", value: 5},
+                { age: "67 - 72 tahun", value: 1},
+                { age: "73 - 78 tahun", value: 0},
+                { age: "79 - 84 tahun", value: 4},
+                { age: "85 - 90 tahun", value: 1}
+            ],
+            16: [
+                { age: "0 - 6 tahun", value: 0},
+                { age: "7 - 12 tahun", value: 3},
+                { age: "13 - 18 tahun", value: 1},
+                { age: "19 - 24 tahun", value: 2},
+                { age: "25 - 30 tahun", value: 0},
+                { age: "31 - 36 tahun", value: 1},
+                { age: "37 - 42 tahun", value: 8},
+                { age: "43 - 48 tahun", value: 1},
+                { age: "49 - 54 tahun", value: 2},
+                { age: "55 - 60 tahun", value: 7},
+                { age: "61 - 66 tahun", value: 2},
+                { age: "67 - 72 tahun", value: 0},
+                { age: "73 - 78 tahun", value: 7},
+                { age: "79 - 84 tahun", value: 1},
+                { age: "85 - 90 tahun", value: 0},
+                { age: "91 - 96 tahun", value: 2}
+            ],
+            17: [
+                { age: "0 - 6 tahun", value: 1},
+                { age: "7 - 12 tahun", value: 1},
+                { age: "13 - 18 tahun", value: 0},
+                { age: "19 - 24 tahun", value: 5},
+                { age: "25 - 30 tahun", value: 0},
+                { age: "31 - 36 tahun", value: 1},
+                { age: "37 - 42 tahun", value: 1},
+                { age: "43 - 48 tahun", value: 5},
+                { age: "49 - 54 tahun", value: 2},
+                { age: "55 - 60 tahun", value: 0},
+                { age: "61 - 66 tahun", value: 1},
+                { age: "67 - 72 tahun", value: 2},
+                { age: "73 - 78 tahun", value: 5},
+                { age: "79 - 84 tahun", value: 5},
+                { age: "85 - 90 tahun", value: 1},
+                { age: "91 - 96 tahun", value: 0},
+                { age: "97 - 102 tahun", value: 4}
+            ],
+            18: [
+                { age: "0 - 6 tahun", value: 2},
+                { age: "7 - 12 tahun", value: 5},
+                { age: "13 - 18 tahun", value: 1},
+                { age: "19 - 24 tahun", value: 0},
+                { age: "25 - 30 tahun", value: 4},
+                { age: "31 - 36 tahun", value: 1},
+                { age: "37 - 42 tahun", value: 4},
+                { age: "43 - 48 tahun", value: 0},
+                { age: "49 - 54 tahun", value: 1},
+                { age: "55 - 60 tahun", value: 4},
+                { age: "61 - 66 tahun", value: 4},
+                { age: "67 - 72 tahun", value: 0},
+                { age: "73 - 78 tahun", value: 0},
+                { age: "79 - 84 tahun", value: 4},
+                { age: "85 - 90 tahun", value: 1},
+                { age: "91 - 96 tahun", value: 4},
+                { age: "97 - 102 tahun", value: 0},
+                { age: "103 - 108 tahun", value: 1}
+            ]
+        };
+
+        function getPasaran(date) {
+            const pasaranCycle = ["Legi", "Pahing", "Pon", "Wage", "Kliwon"];
+            const baseDate = new Date("1900-01-01T00:00:00Z"); // Senin Pahing
+            const diffDays = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
+            return pasaranCycle[(diffDays % 5 + 5) % 5];
+        }
+
+        async function downloadJPG() {
+            const detailDiv = document.getElementById('detail');
+            if (detailDiv.style.display !== 'grid') {
+                alert('Pilih tanggal pada kalender terlebih dahulu.');
+                return;
+            }
+            const canvas = await html2canvas(detailDiv, { scale: 2 });
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'detail_kalender.jpg';
+            link.click();
+        }
+
+        function copyDetailToClipboard() {
+            const detailDiv = document.getElementById('detail');
+            if (detailDiv.style.display !== 'grid') {
+                alert('Pilih tanggal pada kalender terlebih dahulu.');
+                return;
+            }
+
+            let textToCopy = '';
+            for (const element of detailDiv.children) {
+                if (element.tagName === 'H3') {
+                    textToCopy += element.textContent + '\n\n';
+                } else if (element.tagName === 'H4') {
+                    textToCopy += element.textContent + '\n';
+                } else if (element.tagName === 'P') {
+                    textToCopy += element.textContent + '\n';
+                } else if (element.tagName === 'UL') {
+                    for (const li of element.children) {
+                        textToCopy += li.textContent + '\n';
+                    }
+                } else if (element.classList.contains('neptu-detail')) {
+                    textToCopy += element.querySelector('h4').textContent + '\n';
+                    for (const p of element.querySelectorAll('p')) {
+                        textToCopy += p.textContent + '\n';
+                    }
+                    const table = element.querySelector('.neptu-value-table');
+                    if (table) {
+                        const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent).join('\t') + '\n';
+                        textToCopy += headers;
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach((row, index) => {
+                            if (index > 0) {
+                                const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent).join('\t') + '\n';
+                                textToCopy += cells;
+                            }
+                        });
+                    }
+                } else if (element.classList.contains('wuku-detail')) {
+                    const h4 = element.querySelector('h4');
+                    if (h4) textToCopy += h4.textContent + '\n';
+                    for (const p of element.querySelectorAll('p')) {
+                        textToCopy += p.textContent + '\n';
+                    }
+                } else if (element.classList.contains('ramalan-mesir')) {
+                    for (const child of element.children) {
+                        textToCopy += child.textContent + '\n';
+                    }
+                } else if (element.classList.contains('selamatan-section')) {
+                    textToCopy += element.querySelector('h4').textContent + '\n';
+                    const selamatanResults = element.querySelector('#hasilSelamatan');
+                    if (selamatanResults) {
+                        for (const p of selamatanResults.querySelectorAll('p')) {
+                            textToCopy += p.textContent + '\n';
+                        }
+                    }
+                } else if (element.matches('p') && element.querySelector('span#arahRejeki')) {
+                    textToCopy += element.textContent + '\n';
+                }
+            }
+
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('Detail telah disalin ke clipboard. Sekarang Anda dapat menempelkannya ke Google Docs.');
+                })
+                .catch(err => {
+                    console.error('Gagal menyalin ke clipboard: ', err);
+                    alert('Gagal menyalin detail ke clipboard. Silakan coba lagi.');
+                });
+        }
+    </script>
+    <script>
+        const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const pasaran = ['Kliwon', 'Legi', 'Pahing', 'Pon', 'Wage'];
+        const wukuList = [
+            { nama: "Sinta", deskripsi: " Ringkel - Kamis, Senin </p>Dewanya Sanghyang Batara Yamadipati = wataknya seperti raja dan pendita, banyak kemauan, keras, cepat bahagia, bakat kaya harta benda. Memanggul tunggul = mudah mendapatkan kesenangan hidup. Kaki belakang direndam dalam air = perintahnya panas didepan dingin belakang. Pohonnya : Kendayakan = jadi pelindung orang sakit, orang sengsara dan orang minggat. Burungnya : Gagak = mengerti petunjuk gaib. Gedungnya di depan = memperlihatkan simbol kekayaannya, pradah hanya lahir.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              wulanKarahinan: "Tidak sabaran..", aralnya: "Ketika sedang mendapat peningkatan tidak dermawan, maka menyebabkan kejatuhannya..", sedekahSesaji: "Nasi pulen dang-dangan beras senilai zakat fitrah, lauknya pindang kerbau seharga 21 ketheng tidak boleh menawar..",
+              kebaikan: "baik untuk mengobati, membuat sarat supaya.banyak hujan, mengobati menawarkan orang terkena pengasihan atau sebaliknya..", keburukan: "Tidak baik untuk menanam dan membuka pekarangan.." },
+            { nama: "Landep", deskripsi: " Sonya - Rabu, Sabtu, Minggu</p>Dewanya Sanghyang Batara Mahadewa = bagus rupanya, terang hatinya, gemar bersemadi. Kakinya direndam dalam air = perintahnya keras didepan dingin dibelakang, kasih sayang. Pohonnya : Kendayakan = jadi pelindung orang sakit, orang sengsara dan orang minggat. Burungnya : Atat kembang (kakatua) = jadi kesukaan para agung, jika menghambakan diri jadi kesayangan. Gedungnya didepan = memperlihatkan kekayaannya, pradah hanya lahir.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              gedhongDepan: "***** memperlihatkan kekayaannya.", kakiBerendam: "Perintahnya lembut di depan panas di belakang.", sorotingSrengenge: "Menerangi hati semua orang.", aralnya: "Kejatuhan pohon/ kayu.",
+              kebaikan: "baik untuk mengasah pedang, membuat pagar, membuat wisaya ikan.", keburukan: "" },
+            { nama: "Wukir", deskripsi: " Donyo - Selasa, Jumat</p>Dewanya Sanghyang Batara Mahayekti = besar hatinya, menghendaki lebih dari sesama. Tunggulnya : didepan = selalu beruntung, kariernya lancar, akhirnya hidup senang. Menghadapi air di bokor besar = baik budi pekertinya, menghormati orang lain. Pohonnya : Nagasari = bagus rupanya, sopan-santun, jika bekerja dicintai oleh pimpinan. Burungnya : Manyar = tak mau kalah dengan sesama, dapat mengerjakan segala pekerjaan. Gedungnya didepan = memperlihatkan kekayaannya, pradah hanya lahir.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              burungnyaManyar: "tidak mau dilebihi.", gedhongDepan: "***** memperlihatkan kekayaannya dan dermawan.", wukirAsri: "Wukir gunung, (nampak indah dari kejauhan, kalau didekati berbahaya) tidak diketahui isi hatinya dan berwatak ***** memerintah.",
+              aralnya: "dianiaya.", sedekahSesaji: "Nasi uduk dang-dangan beras senilai zakat fitrah, lauknya ayam putih dan kuluban (rebusan daun) lima macam.", kebaikan: "baik untuk mantu, memperbaiki apa saja, berteman tulus.",
+              keburukan: "Tidak baik untuk pergi tetirah, mengobati penyakit, memasang tumbal, dan mendirikan rumah." },
+            { nama: "Kulantir", deskripsi: " Malihan - Senin, Kamis</p>Dewanya Sanghyang Batara Langsur = pemarah. Memanggul tunggul = akhirnya mendapat kesenangan hidup. Air dalam bokor besar disebelah kiri = serong hatinya, sering iri hati. Pohonnya : Ingas = tak dapat untuk berlindung, karena panas. Burungnya : Salindita = lincah / tangkas. Gedungnya terbalik di depan = boros.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              pohonnyaIngas: "Selalu terburu-buru tetapi hatinya penyabar.", burungnyaSlindhitan: "tidak ***** menganggur.", gedhongTerbalik: "harta.Boros tidak bisa menyimpan", angiwakakeBanyu: "***** selingkuh.", membawaUmbulUmbul: "Bisa hidup senang.",
+              wukuKurantil: "Anggara Kasih nuju Wogan tidak baik hatinya.", aralnya: "kalau memanjat.", kurantilIbaratBurung: "kesulitan mendapat nafkah.", kebaikan: "baik untuk mencari jodoh.",
+              keburukan: "Tidak baik untuk menikahkan anak, mengumpulkan orang, menanam, berteman sering bertengkar." },
+            { nama: "Tolu", deskripsi: " Sonya - Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Bayu = dapat menyenangkan hati orang lain, kalau marah berbahaya, tak dapat dicegah. Tunggulnya : dibelakang = kebahagiannya terdapat dibelakang hari. Pohonnya : Wijayamulya (Gaharu) = sangat indah rupanya, tajam roman mukanya, tinggi adat-istiadatnya, teliti, ***** pada kesunyian, selamat hatinya. Burungnya : Branjangan = ringan tangan, cepat bekerjanya. Gedungnya di depan = ***** memperlihatkan kekayaannya, pradah hanya lahir.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              burungnyaBranjangan: "***** membuat perkara.", umbulUmbulBelakang: "Keberuntungannya jatuh belakangan.", gedhongDepan: "sukam emamerkan kekayaannya.", wukuTolu: "angkuh dan susah dilayani kemauannya.",
+              aralnya: "kena gigitan taring dan sengat.", kebaikan: "baik untuk mencari nafkah, mengobati orang sakit, menanam pindah tempat, mantu.", keburukan: "Tidak baik untuk berkhianat, berjudi, memanen buah-buahan yang pohonnya tinggi (palakirna)." },
+            { nama: "Gumbreg", deskripsi: " Nyawa - Selasa,Jumat</p>Dewanya Sanghyang Batara Cakra = keras budinya, segala yang dikehendakinya segera tercapai, tak mau dicegah, pengasih. Kaki sebelah yang di depan direndam dalam air = perintahnya dingin didepan, panas di belakang. Pohonnya : Beringin = jadi pelindung keluarganya, budinya tinggi. Burungnya : Ayam hutan = liar, dicintai oleh para agung, ***** tinggal ditempat sunyi. Gedungnya di kiri = penyayang, tapi kalau sedang jengkel tidak.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              pohonnyaBeringin: "menjadi tempat berlindung.", burungnyaAyamAlas: "disenangi orang berpangkat.", gedhongKiri: "tulus ikhlas.", kakiBerendam: "Perintahnya lembut di depan panas di belakang.",
+              gumbregGeter: "Berwibawa dan berpengaruh, semua perintahnya diikuti bawahan.", aralnya: "kalau berada di air.", kebaikan: "baik untuk merundingkan berbesanan, untuk mencari nafkah mendapat keberuntungan.",
+              keburukan: "Tidak baik untuk menanam kebun, mendirikan rumah, memulai berbagai karya dan bepergian." },
+            { nama: "Warigalit", deskripsi: " Ringkel - Senin,Kamis</p>Dewanya Sanghyang Batara Asmara = bagus rupanya,senang asmara, cemburuan, hatinya mudah tersentuh. Pohonnya : Sulastri = bagus rupanya, banyak yang cinta. Burungnya : Kepodang – gampang marah, cemburuan, tak ***** berkumpul dengan orang banyak. Menghadapi Candi = Senang berprihatin, menyepi.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              pohonnyaSulkastri: "Tanpa Bunga, Buahnya jadi obat: Kesayangan pembesar.", burungnyaKepodang: "Wataknya pemarah.", menghadapCandi: "hidupnya selalu prihatin.", warigalitTanNganti: "Selalu tidak kecukupan sandhang pangannya.",
+              aralnya: "sering ikut terserempet perkara.", kebaikan: "baik untuk berkenalan persaudaraan, memuliakan leluhur, mengalirkan air, bepergian mengunjungi sanak kerabat.", keburukan: "Tidak baik untuk menyeleweng, bepergian jauh dan berperang." },
+            { nama: "Warigagung", deskripsi: " Sonya - Rabu,Sabtu,Minggu </p> Dewanya sanghyang Mahayekti = berat tanggungannya, berkeinginan. Tunggulnya : di belakang = rejekinya dibelakang hari. Pohonnya : cemara = ramah bicaranya, lemah lembut perintahnya dan dihormati. Burungnya : Betet = keras kemauannya, pandai mencari kehidupan. Gedungnya dua buah di muka dan di belakang = ikhlasnya hanya setengah, jiwanya labil.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              pohonnyaCemara: 'Angkuh, ***** berbuat "tidak baik" (***** menggoda).', burungnyaBethet: "bisa mencari nafkah sendiri.bicara", gedhongDepanBelakang: "hemat. setengah", umbulUmbulBelakang: "Keberuntungannya jatuh belakangan.",
+              warigagungKethuk: "Sangat memperhatikan terhadap sandang pangan dirinya (sumber penghidupan).", aralnya: "berasal dari sanak saudaranya sendiri.", sedekahSesaji: "Nasi uduk lauknya bebek putih yang dimasak berasa gurih, kuluban (dedaunan direbus) lima macam.",
+              kebaikan: "", keburukan: "Tidak baik untuk pergi menyamar, pindah tempat, menyiksa binatang piaraan." },
+            { nama: "Julungwangi", deskripsi: " Sonya - Selasa,Jumat</p>Dewanya sanghyang Sambu = tinggi perasaannya, tidak boleh disamai. Tunggulnya : di depan = selalu beruntung, kariernya lancar, akhirnya hidup senang. Menghadapi air di bokor = dermawan tetapi harus diperlihatkan. Pohonnya Cempaka = dicintai oleh orang banyak. Burungnya Kutilang = banyak bicara dan perkataannya dipercayai orang, dicintai para pembesar.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              pohonnyaCempaka: "banyak disenangi orang.", burungnyaKutilang: "banyak bicaranya.", menghadapPasu: "Ikhlas, berbudi baik, tidak ***** menyimpan harta.", umbulUmbulDepan: "sangat disenangi orang berpangkat/besar.",
+              aralnya: "diterkam harimau.", jlgWangiBanteng: "Banteng adalah simbol sikap yang tangguh, namun lumpuh tidak mampu diberdayakan.", kebaikan: "baik untuk bepergian lakubrata, bisa mendapatkan wahyu, membuka tanah untuk menanam, untuk menggelar kawruh akan digugu.",
+              keburukan: "Tidak baik untuk bepergian jauh, pindah tempat, punya hajat, mendirikan apa saja, bekerja mencari nafkah, mengobati orang sakit." },
+            { nama: "Sungsang", deskripsi: " Malihan - Senin, Kamis</p>Dewanya sanghyang Gana = pemarah, gelap hati. Pohonnya : Kayutangan = tak ***** menganggur, keras budinya, ***** kepada kepunyaan orang lain. Burungnya : Nuri = pemboros, jauh kebahagiaannya. Gedungnya terbalik di belakang = ikhlasan dengan tidak pakai perhitungan.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              pohonnyaTangan: "***** kegiatan tidak mau menganggur.", burungnyaNori: "Boros, dermawan, jauh rejekinya, hatinya jahat dan serakah.", sungsangMega: "Wataknya peteng atine (tega, berani).", aralnya: "terkena besi menghindari bepergian menuju ke timur.",
+              sungsangWurung: "kehadirannya bagaikan datangnya api, menerangi, berwibawa, tetapi juga membuat gerah orang.", kebaikan: "baik untuk mencari nafkah, pindah tempat, berteman, berkerabat, berbesanan, mbabar kainbatik, menanam.",
+              keburukan: "Tidak baik untuk memanjat, menebang kayu kebun, pergi jauh, bersenang-senang, beramai-ramai dan berperang." },
+            { nama: "Galungan", deskripsi: " Sonya - Rabu,Sabtu,Minggu </p>Dewanya Sanghyang Batara Kamajaya = teguh hatinya, dapat melegakan hati orang susah, cinta pada perbuatan baik, jauh kepada perbuatan jahat. Memangku air dalam bokor = ***** bersedekah, pengasih, namun sedikit rejekinya. Pohonnya : Kayutangan = ringan tangan, keras budinya, gampang ***** pada kepunyaan orang lain. Burungnya : Elang = gesit tingkahnya, pandai mencari nafkah.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              pohonnyaTangan: "berwatak tidak mau menganggur.", burungnyaBidho: "Hatinya keras, berkeinginan tidak baik memiliki barang orang lain.", memangkuBokor: "Dermawan tetapi boros.", galunganSering: "sering terlena pada keinginan yang mengharu-biru hatinya.",
+              aralnya: "***** bertengkar.", kebaikan: "baik untuk tirakat (bertapa), mengunjungi sanak kerabat, berguru kawruh (pengetahuan).", keburukan: "Tidak baik untuk menanam bambu, bepergian jauh,mengobati penyakit, menikahkan, mengharap jadi priyayi (orang terhormat), mendirikan rumah." },
+            { nama: "Kuningan", deskripsi: " Nyawa - Selasa,Jumat</p>Dewanya Sanghyang Batara Indra = melebihi sesama, tinggi derajatnya. Pohonnya : Wijayakusuma = menghindari keramaian, punya kharisma tinggi, orang senang bergaul dengannya. Burungnya : Urang-urangan = lincah, cepat bekerjanya, lekas marah, mudah ngambek. Gedungnya di belakang, jendelanya tertutup = hemat, banyak perhitungan.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              pohonnyaWijayakusuma: "Rupawan.", burungnyaUrang: "kikir.Kuninganpinuteja tercerahkan, selamat.", aralnya: "diamuk / dikeroyok.", kebaikan: "", keburukan: "Tidak baik untuk menanam, memperindah rumah,menikahkan anak." },
+            { nama: "Langkir", deskripsi: " Ringkel - Senin,Kamis</p>Dewanya Sanghyang Batara Kala menggigit bahunya sendiri = besar nafsunya, tidak sayang kepada badannya sendiri, yang melihat takut, buruk adat-istiadatnya, tidak mau menurut, murka, banyak larangan. Pohonnya : Ingas dan cemara tumbang = panas hati, tak boleh didekati orang. Burungnya Gagak = tanggap bisikan gaib.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              pohonnyaCemaraIngas: 'Auranya panas, sehingga tidak bisa dijadikan tempatberlindung, kurang baik wataknya dan ***** berbuat jahat.', burungnyaGemak: "Wataknya berani bertindak jahat dan tidak baik.", langkirUripe: "Hatinya kaku sehingga menyusahkan diri sendiri.",
+              aralnya: "yang dihadapi kecurian dan berkelahi.", langkirAna: "sering mendapat musuh.", kebaikan: "baik untuk menanam, bepergian, berbesanan, mewarangi senjata, menobati penyakit.", keburukan: "Tidak baik untuk berkhianat, berperkara dan bertengkar." },
+            { nama: "Mandasiya", deskripsi: " Sonya - Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Brama, kuat budinya, pemarah, tak mau memberi ampun, jika marah tak dapat dicegah, tegaan. Pohonnya : Asam = kuat dan dicintai orang banyak, jadi pelindung sengsara. Burungnya : Platukbawang = rajin bekerja. Gedungnya tertutup di depan = hemat dan banyak rejekinya.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              pohonnyaAsam: "menjadi tempat berlindung orang susah.", burungnyaPlatuk: "tenaganya kuat.", gedhongDepanTertutup: "Hemat, kalau memberi punya harapan untuk mendapat sanjungan, tinggi hati.", mandhasiyaAnggara: "Bisa memberi perlindungan pada orang lain.",
+              aralnya: "kena gigitan taring.", kebaikan: "", keburukan: "Tidak baik untuk bepergian, mencari nafkah, membuat sumur dan membuka perkarangan." },
+            { nama: "Julungpujud", deskripsi: " Donyo - Selasa,Jumat</p>Dewanya Sanghyang Batara Guritno, = ***** kepada keramaian, ***** berdandan, tersiar baik, mempunyai kedudukan yang lumayan, tidak pernah kekurangan uang. Menghadap bukit/gunung = besar kemauannya, tak ***** diatasi, menghendaki memerintah. Pohonnya : Remuyuk = indah warnanya, tidak berbau, disukai orang. Burung : Emprit Jowan = besar kemauannya tetapi pikirannya sukar diduga orang, halus budinya.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              pohonnyaRembuyut: "baik penampilannya, sering dicari.", burungnyaEmprit: "Mandiri dalam penghasilan, baik ucapannya.", julungPujudLengkawa: "Berwatak tidak pernah serius (sembrono).", aralnya: "ditenung / disantet.",
+              merekaBerwuku: "memiliki nafsu besar.", kebaikan: "baik untuk mencari nafkah, memelihara hewan, rajakaya (kerbau, sapi, kuda), menanam palakirna (buah-buahan).", keburukan: "Tidak baik untuk merencanakan pergi mencari syarat." },
+            { nama: "Pahang", deskripsi: " Malihan - senin,Kamis </p>Dewanya Sanghyang Batara Tantra = perkataannya melebihi sesama, tidak sabaran menepati janji. Bokornya di sebelah kiri di belakangnya = ***** jalan serong. Memanggul keris = kasar perkataannya, panas hati, ***** bertikai. Pohonnya : Kendayaan = jadi pelindung orang sakit, orang sengsara dan orang minggat. Burung : Cucakrowo = banyak bicaranya. Gedung di depan = boros.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              pohonnyaGendhayakan: "menjadi pelindung orang sakit.", burungnyaCocak: "Pandai bicara, ***** bertempat diperkotaan.", gedhongTerbuka: "ikhlas dermawan.", memangdhiPraja: "Ucapannya bernuansa panas.",
+              ngiwakakeBanyu: "Kurang baik budi pekertinya.", pahangOra: "Mudah tersinggung.", aralnya: "dianiaya.", kebaikan: "", keburukan: "Tidak baik untuk bepergian jauh, mencari nafkah,merencanakan dan memperbaiki apa saja." },
+            { nama: "Kuruwelut", deskripsi: " Sonya - Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Wisnu : tajam ciptanya, tinggi dan selamat budinya, melebihi sesama dewa. Memanggul : cakra = tajam hatinya, berhati-hati. Pohonnya : parijata = jadi pelindung dan besar kebahagiaannya. Burungnya : puter = jika berbicara mula-mula kalah, akhirnya menang, tidak pernah bohong, tidak ***** terhadap perkataan yang remeh. Gedungnya di depan = memperlihatkan kekayaannya, angkuh dan tidak mau disepelekan.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              pohonnyaParijatha: "Cekatan tetapi nakal (***** mengganggu orang).", burungnyaSepahan: "selalu prihatin.", kuruwelutAir: "Hatinya dipenuhi perasaan selamat.", aralnya: "terkena peluru.", kebaikan: "",
+              keburukan: "Tidak baik untuk bepergian, memperbaiki apa saja,mengobati penyakit, menanam jujutan sejenis jagung)." },
+            { nama: "Marakeh", deskripsi: " Sonya - Selasa,Jumat</p>Dewanya Sanghyang Batara Surenggana = tawakal hatinya, ingatannya kuat, berkesanggupan/optimis, berani kepada kesulitan. Tunggulnya membalik = cepat naik karier, lekas hidup senang. Pohonnya : Trengguli = buahnya tidak berguna. Tak mempunyai burung = tak boleh disuruh jauh, tentu mendapat bahaya. Gedungnya dipanggul = memperlihatkan pemberian.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              pohonnyaTrengguli: "Tidak bisa disuruh pergi jauh, menjad ipusat perhatian orang ketika dalam pertemuan.", umbulUmbulTerbalik: "cepat mencapai sukses.", gedhongDisunggi: "***** memamerkan karunia Tuhan yang diperoleh.",
+              marakehDamar: "daya ingatnya kuat.", aralnya: "dianiaya.", kebaikan: "baik untuk menanam padi, pasang tumbal, memperbaiki rumah, membuat pekarangan.", keburukan: "Tidak baik untuk bekerja sambilan, berkasih-kasihan dan berpindah tempat." },
+            { nama: "Tambir", deskripsi: " Nyawa - Senin,Kamis</p>Dewanya Sanghyang Batara Syiwa = lahir dan batinnya terkadang berlainan, egois dan senang pamer. Pohonnya : Upas = bukan tempat perlindungan, tajam perkataannya. Burungnya : prenjak = ***** membuat isu. Gedungnya tiga tertutup semua = tidak dapat kaya hanya setengah-setengah saja.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              pohonnyaUpas: "Tidak bisa dijadikan tempat berlindung mengabdi.", burungnyaPrenjak: "tinggi cita-citanya.", menyandhingGedhong: "***** membual.", tambirAnggara: "Batinnya tidak selamat.", aralnya: "dijahili / dikerjai orang.",
+              kebaikan: "baik untuk pergi mencari nafkah, menanam pohon buah-buahan (palakina), menancapkan turus (cabang / ranting pohon yang bisa tumbuh setelah ditancapkan di tanah), berguru ilmu kebatinan dan pergi berperang.", keburukan: "" },
+            { nama: "Madangkungan", deskripsi: " Sonya -Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Basuki : mengutamakan keberadaan, senang melihat orang lain sengsara, keinginannya aneh-aneh dan sukar menemukan jati diri. Pohonnya : plasa = terhormat didaerah sendiri, sedang di kota tidak berarti apa-apa. Burungnya : pelung = ***** tinggal ditempat sunyi. Gedungnya di atas = mendewa-dewakan kekayaannya, hemat.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              pohonnyaPlasa: "terkenal.", burungnyaPelung: "***** di tempat yang berair,kebaikan dibelakang...", gedhongAtas: "Banyak yang bersimpati, bicaranya halus / sopan, menerima ketentuanTuhan..",
+              mdKunganUnen: "periang dan banyak bicara...", aralnya: "disalahi di waktu malam..", doanyaNguwur: "Kala Jaya Bumi : ada di timur menghadap ke barat...",
+              kebaikan: "mendirikan rumah, pergi mencari srana (solusi)..", keburukan: "Tidak baik untuk bertengkar dan berkhianat." },
+            { nama: "Maktal", deskripsi: " Donya - Selasa,Jumat</p>Dewanya Sanghyang Batara Sakti = berbudi teguh, lurus hatinya, optimis, gesit berkarya, baik pekerjaannya, kata-katanya enak didengar. Pohonnya : nagasari = bagus rupanya, lemah lembut tutur katanya, dicintai oleh pembesar. Burungnya : ayam hutan = ***** tinggal ditempat sunyi, sukses dalam karier, banyak tanda-tandanya akan mendapat bahagia. Gedungnya ditumpangi tunggul = kaya benda dan dihormati/berwibawa.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              pohonnyaNagasari: "Banyak yang bersimpati, ucapannya mememikat, pandai berbakti dan mengabdi.", burungnyaAyamAlas: "Banyak yang bersimpati, ucapannya mememikat, pandai berbakti dan mengabdi.",
+              gedhongDitumpangi: "kekayaan dan kehormatan Mendapatkan bersamaan.", maktalPancawara: "besar hatinya. tertohor dan terkabarkan", aralnya: "berkelahi.", sedekahSesaji: "Nasi pulen dan nasu gurih, lauknya pindang bebek dan ayam lembaran. Do'anya : Adam.",
+              kebaikan: "baik untuk menikahkan, mengundang kerabat untuk suatu keperluan, memperbaiki apa saja dan memuja Tuhan.", keburukan: "Tidak baik untuk bepergian, pindah rumah / tempat dan meminjamkan uang." },
+            { nama: "Wuye", deskripsi: " Malihan - Senin,Kamis</p>Dewanya Sanghyang Batara Kuwera = mudah tersinggung, mudah ngambek, senang menyendiri, senang beramal, kata-katanya tegas dan tidak dapat menabung. Memasang keris terhunus disebelah kaki = waspada dan tajam hatinya. Pohonnya : Tal = panjang umurnya, besar tanda kebahagiannya, pemberani, kuat dan tetap hatinya. Burungnya : Gagak = tak ***** kepada keramaian, tanggap gaib. Gedungnya terlentang di depan = pengasih tapi pemboros.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              pohonnyaTal: "panjang umurnya.", burungnyaGogik: "besar ambisi dan kaku ati.", menyandangKeris: "Tajam intuisinya.", gedhongTerbuka: "dermawan dan ikhlas.", keduaKakiBerendam: "Berwatak memberi keteduhan kepada sesama tajam pandangannya terhadap kebaikan, mudah tersinggung.",
+              aralnya: "sanjabaya (bahaya yang datang ketika berkunjung pada kerabat).", wuyeMasangi: "pandai berstrategi.", kebaikan: "baik untuk menangkap burung, menjalin persaudaraan, pergi menanam, mencari rejeki.", keburukan: "Tidak baik pergi jauh dan menipu." },
+            { nama: "Manahil", deskripsi: " Sonya - Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Citragatra = menjunjung diri sendiri, dapat berkumpul ditempat ramai, bakat angkuh, selalu bersedia-sedia untuk membela diri. Air di bokor di belakangnya = halus perintahnya, tetapi tidak menghargai bawahan. Memangku tombak terhunus = waspada dan tajam hatinya. Pohonnya : Tegaron = liat hatinya, semangat perjuangan hidupnya tinggi. Burungnya : Sepahan = liar budinya, tajam pikirannya / perasa.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              pohonnyaTigaron: "sedikit bekerja (pemalas).", burungnyaSepahan: "baik nafkahnya.", memangkuTombak: "tajam intuisi batinnya.", manahilLintang: "pencemburu.", aralnya: "Kena besi.", kebaikan: "",
+              keburukan: "Tidak baik untuk menjatuhkan biji, mantu dan mencari sambilan." },
+            { nama: "Prangbakat", deskripsi: " Nyawa - Selasa,Jumat</p>Dewanya Sanghyang Batara Bisma = pemarah, tangkas, pemalu, memperlihatkan watak prajurit, menghendaki jadi pemimpin orang, lurus pembicaraannya, segala yang dikehendakinya tak ada sukarnya. Kakinya kanan direndam dalam air bokor = perintahnya dingin di depan panas di belakang. Pohonnya : Tirisan = panjang umurnya, cukup rejekinya, agak angkuh. Burungnya : urang-urangan = cepat kerjanya.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              pohonnyaTirisan: "Panjang umur dan terjamin baik nafkahnya, sombong.", burungnyaUrang: "cekatan.", kakiDepanBerendam: "pekertinya lembut di depan dan panas di belakangnya.", prgBakatAnggarakasih: "kaku hatinya.",
+              aralnya: "memanjat.", kebaikan: "baik untuk mencari nafkah sambilan,merawat simpanan pangan, perantara perdagangan, menjatuhkan hukuman.", keburukan: "Tidak baik untuk bepergian, menananm tanaman kebun, mencari pekerjaan dan mengobati penyakit." },
+            { nama: "Bala", deskripsi: " Ringkel - Senin,Kamis </p>Dewanya Sanghyang Batari Durga = ***** berbuat huru-hara,membuat berita, jahil, ***** bercampur dengan kejahatan, tak ada yang ditakuti, pandai sekali bertindak jahat. Pohonnya : cemara = ramai bicaranya, lemah lembut perintahnya dan dihormati. Burungnya : Ayam hutan = liar budinya, dicintai oleh pembesar, tinggi budinya, banyak tanda-tanda akan mendapat bahagia, ***** tinggal ditempat yang sunyi. Gedungnya di depan = senang memperlihatkan kekayaannya.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              pohonnyaCemara: "Banyak bicara, ***** menyombongkan kedudukan, cenderung berbuat yang tidak baik.", burungnyaAyamAlas: "disenangi orang berpangkat.", balaSarwa: "sering membuat keributan.", aralnya: "kena santet dan bisa / racun. baik yang jauh dari rejeki.",
+              kebaikan: "baik untuk mengunjungi teman, menjadi utusan, membantu mempertemukan orang yang sedang berunding.", keburukan: "Tidak baik untuk mengajarkan ilmu,mewejangkan ilmu kebatinan dan memperbaiki apapun." },
+            { nama: "Wugu", deskripsi: " Sonya - Rabu,Sabtu,Minggu  Dewanya Sanghyang Batara Singajalma = banyak akal, lekas mengerti, cerdas, baik budinya, tetapi tidak senang diingkari janji. Pohonnya : Wuni sedang berbuah = siapa yang melihat bagaikan mengidam, akan tetapi setelah dimakan sering dicela. Banyak rejekinya. Burungnya : Kepodang = pamer, cemburuan, tidak ***** berkumpul. Gedungnya tertutup di belakang = hemat dan hati-hati membelanjakan uangnya.", keris: ["Panimbal", "Condong Campur", "Jalak Tilamsari", "Jalak Dhinding", "Jalak Sangutumpeng", "Jalak Ngore"],
+              burungnyaKepodhang: "menyendiri.", gedhongBelakang: "Gampang tersinggung dan ***** kikir.", wuguAngkasa: "luas wawasan.", aralnya: "terkena bisa menghindari bepergian yang arahnya ke selatan.",
+              kebaikan: "baik untuk memperbaiki rumah, mantu bepergian mencari rejeki, menanam ubi-ubian.", keburukan: "Tidak baik untuk membangun pertemanan," },
+            { nama: "Wayang", deskripsi: " Sonya - Selasa,Jumat</p>Dewanya Sanghyang Batari Sri = banyak rejekinya, bakti, teliti, dingin perintahnya dicintai oleh orang banyak. Bokor berisi air di depan dan duduk di atasnya = sejuk hatinya, sabar, rela hati, akan tetapi harus diperlihatkan pemberiannya. Pasang keris terhunus = perintahnya mudah didepan, sukar dibelakang. Pohonnya = Cempaka = dicintai oleh orang banyak. Burungnya = Ayam hutan = dicintai oleh pembesar, liar budinya, berbakat angkuh, senang tinggal ditempat yang sunyi.", keris: ["Pandhawa", "Rarasinduwa", "Sempana Badhong", "Semar Mesem", "Semar Getak", "Semar Tinandhu", "Brojol"],
+              pohonnyaCempaka: "banyak yang menyukai,berwibawa.", burungnyaAyamAlas: "Disenangi orang berpangkat.", gedhongDepan: "***** memaerkan kekayaan dan keberhasilannya.", wayangPradangga: "Bisa memberi pencerahan dan punya kelebihan dalam menangkap tanda2 / firasat.",
+              aralnya: "dikhianati. kelembutan yang mengalahkan berwatak keras.", kebaikan: "baik untuk mencari rejeki, berguru ilmu kebatinan.", keburukan: "Tidak baik menjenguk orang sakit, berperang, merencanakan sesuatu" },
+            { nama: "Kulawu", deskripsi: " Malihan - Senin,Kamis</p>Dewanya Sanghyang Batara Sadana = kuat budinya, besar harapannya, menarik dalam pergaulan, pemboros senang nraktir, bagi laki-laki ***** berpoligami. Duduk di bokor berisi air ditepi kolam = sejuk hatinya, dingin perintahnya. Membelakangi senjata tajam = pikirannya terdapat dibelakang, kurang pandai. Pohonnya: Tal = panjang umurnya, besar harapannya, kuat budinya. Burungnya : Nuri, boros, murka. Gedungnya di depan = senang memperlihatkan kekayaannya.", keris: ["Sempana Kinjeng", "Kebo Lajer", "Pudhak Sategal", "Putri Sinaroja", "Campur Bawur", "Sadak"],
+              burungnyaNori: "Boros dan rela bukan karena menginginkan sanjungan, besar keinginannya.", aralnya: "kena bisa dan digigit ular.", sedekahSesaji: "Bebek, ayam, burung dimasak bersama-sama, dimasak bebas.",
+              kulawuMenikah: "pun bisa awet wayuh (memadu isteri), ibarat berkumpulnya dengan burung dewata.", kebaikan: "baik untuk mengobati orang sakit,", keburukan: "" },
+            { nama: "Dukut", deskripsi: " Sonya - Rabu,Sabtu,Minggu</p>Dewanya Sanghyang Batara Sakri = keras hatinya, selalu was-was, rajin, tajam pikirannya, segala yang dilihatnya berhasrat dipunyainya. Pohonnya : Pandanwangi = tidak menonjol. Burungnya : Ayam hutan = dicintai oleh para pembesar, liar dan tinggi budinya, besar harapannya, ***** tinggal ditempat sunyi. Membelakangi gedungnya = sangat hemat. Berhadapan dengan dua bilah keris terhunus = selalu siaga dan waspada, serta serba ingin tahu.", keris: ["Pandhawa", "Sengkelat", "Tebu Sauyun", "Bethok", "Kebo Teki", "Kebo Lajer"],
+              burungnyaAyamAlas: "Disenangi orang berpangkat (pembesar).", diapitKeris: "Berhati tajam (mudah tersinggung) dan kepinginan.", gedhongBelakang: "Wataknya narima terhadap nasib dan hati-hati dalam mengeluarkan uang (kumed= mendekati kikir / pelit).",
+              aralnya: "dalam peperangan.", dukutKitri: "pilih orang berpangkat dalam bergaul.", kebaikan: "baik untuk memperbaiki rumah, membuka kebun, mencari jodoh, membuat obat dan sesaji.", keburukan: "" },
+            { nama: "Watugunung", deskripsi: " Sonya - Selasa,Jumat</p>Dewanya Sanghyang Batara Antaboga dan Batari Nagagini. Antaboga = senang tinggal alam untuk bertapa. Nagagini = gemar kepada asmara. Keduanya sangat gemar kebudayaan dan ilmu kebatinan. Menghadap Candi = ***** bertapa ditempat yang sunyi, gemar bersemedi dan mempelajari ilmu kebatinan. Pohonnya : Wijayakusuma = rupawan, tinggi budinya, tidak ***** pada keramaian, terlihat angkuh, teliti. Burungnya : Gogik = cemburuan, mudah tersinggung dan tidak senang di tempat yang ramai.", keris: ["Pandhawa", "Carangsoka", "Sabuk Tampar", "Sabuk Inten"],
+              pohonnyaWijaya: "Menjalani hidup sebagai pendeta.", burungnyaGogik: "banyak bicara bernada nasehat.", wtGunungGerah: "Orang yang selalu kesusahan akibat ulahnya sendiri.", aralnya: "dianiaya.",
+              kebaikan: "baik untuk mencari penyembuhan, menanam, berteman, berbesanan.", keburukan: "Tidak baik untuk membuat pagar pekarangan dan menyimpan harta benda." }
+        ];
+        const arahRejeki = {
+            "Utara": ["Warigagung", "Marakeh", "Kulawu"],
+            "Timur laut": ["Sinta", "Galungan", "Maktal"],
+            "Timur": ["Sungsang", "Watugunung", "Madangkungan"],
+            "Tenggara": ["Wukir", "Manahil", "Langkir"],
+            "Selatan": ["Gumbreg", "Pahang", "Wugu", "Kulantir", "Mandasiya", "Prangbakat"],
+            "Barat daya": ["Julungwangi", "Dukut", "Tambir"],
+            "Barat": ["Landep", "Kuningan", "Wuye"],
+            "Barat laut": ["Tolu", "Bala", "Julungpujud"]
+        };
+        const sadwaraList = ["Tungleh", "Aryang", "Urukung", "Paniron", "Was", "Maulu"];
+        const liburNasional = {
+            '2025-01-01': 'Tahun Baru Masehi',
+            '2025-01-29': 'Tahun Baru Imlek',
+            '2025-02-28': 'Isra Mi\'raj',
+            '2025-03-29': 'Nyepi',
+            '2025-04-18': 'Hari Ini (Acuan): Jumat Kliwon, Wuku Sungsang'
+        };
+
+        const sifatPasaran = {
+            "Kliwon": "Pandai bicara dan bergaul, periang, ambisius, urakan, kurang bisa membalas budi, setia pada janji, ceroboh memilih makanan, banyak selamat dan doanya.",
+            "Legi": "Bertanggung jawab, murah hati, enak dalam pergaulan, selalu gembira seperti tidak pernah susah, sering kena fitnah, kuat tidak tidur malam hari, berhati-hati namun sering bingung sendiri, bicaranya berisi. Banyak keberuntungan dan kesialannya.",
+            "Pahing": "Selalu ingin memiliki (barang), kesungguhannya penuh perhitungan untuk mendapatkan untung, ***** menolong, mandiri, kuat lapar, banyak musuhnya, kalau tersinggung menakutkan marahnya, ***** kebersihan. Sering kena tipu dan kalau kehilangan jarang bisa menemukan kembali.",
+            "Pon": "Bicaranya banyak diterima orang, ***** tinggal di rumah, tidak mau memakan yang bukan kepunyaannya sendiri, ***** marah kepada keluarganya, jalan pikirannya sering berbeda dengan pandangan umum. ***** berbantahan, berani kepada atasan. Rejekinya cukup.",
+            "Wage": "Menarik tetapi angkuh, setia dan penurut, malas mencari nafkah perlu dibantu orang lain, kaku hati, tidak bisa berpikir panjang, sering gelap pikiran dan mendapat fitnah."
+        };
+
+        const sifatHari = {
+            "Senin": "Selalu berubah, indah dan selalu mendapatkan simpati",
+            "Selasa": "Pemarah dan pencemburu serta luas pergaulannya",
+            "Rabu": "Pendiam, pemomong dan penyabar",
+            "Kamis": "Sangar menakutkan",
+            "Jumat": "Energik dan mengagumkan",
+            "Sabtu": "Membuat orang merasa senang dan susah ditebak",
+            "Minggu": "Tekun, mandiri dan berwibawa"
+        };
+
+        const ramalanMesir = [
+            { name: "Amon-Ra", start: { month: 0, day: 8 }, end: { month: 0, day: 21 }, alt_start: { month: 1, day: 1 }, alt_end: { month: 1, day: 11 },
+              characteristics: "Bijaksana, kuat, sangat optimis, bakat kepemimpinan, pelindung.",
+              ramalan: "Penuh kesempatan untuk mengambil peran pemimpin atau pembimbing. Jaga keseimbangan antara ambisi dan kepentingan orang lain." },
+            { name: "Anubis", start: { month: 4, day: 8 }, end: { month: 4, day: 27 }, alt_start: { month: 5, day: 29 }, alt_end: { month: 6, day: 13 },
+              characteristics: "Perlindungan, kesetiaan, introvert, reflektif, intuisi kuat, mendalam, mencari makna.",
+              ramalan: "Kekuatan dalam kesendirian dan refleksi. Kesuksesan dari intuisi dan wawasan dalam menghadapi tantangan." },
+            { name: "Bastet", start: { month: 6, day: 14 }, end: { month: 6, day: 28 }, alt_start: { month: 8, day: 23 }, alt_end: { month: 8, day: 27 }, third_start: { month: 9, day: 3 }, third_end: { month: 9, day: 17 },
+              characteristics: "Perlindungan, rumah, kesenangan, ramah, kreatif, penuh kasih, peka.",
+              ramalan: "Dipenuhi hubungan harmonis dan kebahagiaan. Jaga keseimbangan antara membantu orang lain dan menjaga diri sendiri." },
+            { name: "Geb", start: { month: 1, day: 12 }, end: { month: 1, day: 29 }, alt_start: { month: 7, day: 20 }, alt_end: { month: 7, day: 31 },
+              characteristics: "Bumi, stabilitas, keterhubungan dengan alam, setia, penuh belas kasih, realistis.",
+              ramalan: "Kebahagiaan dalam kehidupan sederhana dan penuh cinta. Hati-hati agar tidak terlalu terbawa kekhawatiran." },
+            { name: "Horus", start: { month: 3, day: 20 }, end: { month: 4, day: 7 }, alt_start: { month: 7, day: 12 }, alt_end: { month: 7, day: 19 },
+              characteristics: "Langit, perang, pemimpin alami, tegas, tanggung jawab kuat.",
+              ramalan: "Dihadapkan pada banyak keputusan penting. Belajar untuk mendengarkan nasihat orang lain." },
+            { name: "Isis", start: { month: 2, day: 11 }, end: { month: 2, day: 31 }, alt_start: { month: 9, day: 18 }, alt_end: { month: 9, day: 29 }, third_start: { month: 11, day: 19 }, third_end: { month: 11, day: 31 },
+              characteristics: "Cinta, perlindungan, peduli, penuh kasih sayang, bijaksana, setia mendukung.",
+              ramalan: "Sering menjadi penengah dalam konflik. Jaga diri agar tidak terlalu terlibat dalam masalah orang lain." },
+            { name: "Mut", start: { month: 0, day: 22 }, end: { month: 0, day: 31 }, alt_start: { month: 8, day: 8 }, alt_end: { month: 8, day: 22 },
+              characteristics: "Ibu, keibuan, kasih sayang, bijaksana, sabar, intuisi keibuan kuat.",
+              ramalan: "Dipenuhi momen yang memperkuat keluarga dan persahabatan. Jaga keseimbangan antara merawat orang lain dan diri sendiri." },
+            { name: "Osiris", start: { month: 2, day: 1 }, end: { month: 2, day: 10 }, alt_start: { month: 10, day: 27 }, alt_end: { month: 11, day: 18 },
+              characteristics: "Kebangkitan, dunia bawah, transformator, bangkit dari kesulitan.",
+              ramalan: "Penuh perubahan dan transformasi. Kekuatan dalam kemampuan beradaptasi dan berkembang di tengah tantangan." },
+            { name: "Sekhmet", start: { month: 6, day: 29 }, end: { month: 7, day: 11 }, alt_start: { month: 9, day: 30 }, alt_end: { month: 10, day: 7 },
+              characteristics: "Perang, penyembuhan, pejuang sejati, penuh energi dan tekad.",
+              ramalan: "Dihadapkan pada banyak tantangan yang butuh keberanian dan ketegasan. Hati-hati agar tidak terlalu keras pada diri sendiri dan orang lain." },
+            { name: "Set", start: { month: 4, day: 28 }, end: { month: 5, day: 18 }, alt_start: { month: 8, day: 28 }, alt_end: { month: 9, day: 2 },
+              characteristics: "Kekacauan, perubahan, inovator, memberontak tradisi, mencari cara baru.",
+              ramalan: "Penuh perubahan tiba-tiba dan tak terduga. Belajar mengendalikan kekacauan dan mengubahnya menjadi kesempatan." },
+            { name: "Sobek", start: { month: 2, day: 1 }, end: { month: 2, day: 7 }, alt_start: { month: 9, day: 22 }, alt_end: { month: 9, day: 31 },
+              characteristics: "Sungai Nil, kekuatan primal, kepribadian kuat, bersemangat, dominan.",
+              ramalan: "Dihadapkan pada situasi memimpin dan melindungi orang lain. Belajar untuk tidak terlalu mendominasi dan memberi ruang bagi orang lain." },
+            { name: "Thoth", start: { month: 3, day: 1 }, end: { month: 3, day: 19 }, alt_start: { month: 10, day: 8 }, alt_end: { month: 10, day: 17 },
+              characteristics: "Kebijaksanaan, pengetahuan, cerdas, analitis, rasa ingin tahu tinggi.",
+              ramalan: "Kesuksesan dalam bidang yang butuh analisis mendalam dan pemikiran logis. Jaga keseimbangan antara kerja keras dan kehidupan pribadi." }
+        ];
+
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let neptuKemarin = null;
+        let neptuDuaHariLalu = null;
+        let neptuHarian = {};
+        let selectedDate = null;
+        let currentWuku = null;
+        let selectedPasaranIndex = null;
+
+        const calendar = document.getElementById('calendar');
+        const monthYear = document.getElementById('monthYear');
+        const monthYearNav = document.getElementById('monthYearNav');
+        const detail = document.getElementById('detail');
+        const pancatanResultsDiv = document.getElementById('pancatan-results');
+        const numerologyResultDiv = document.getElementById('numerology-result');
+        const numerologyExplanationDiv = document.getElementById('numerology-explanation');
+
+        const pasaranCycle = ["Legi", "Pahing", "Pon", "Wage", "Kliwon"];
+        const neptuHariJawa = { "Minggu": 5, "Senin": 4, "Selasa": 3, "Rabu": 7, "Kamis": 8, "Jumat": 6, "Sabtu": 9 };
+        const neptuPasaranJawa = { "Legi": 5, "Pahing": 9, "Pon": 7, "Wage": 4, "Kliwon": 8 };
+
+        const tarotCards = [
+            { name: "The Fool", explanation: "Awal yang baru, potensi tak terbatas, spontanitas." },
+            { name: "The Magician", explanation: "Kekuatan, kehendak, manifestasi." },
+            { name: "The High Priestess", explanation: "Intuisi, misteri, kebijaksanaan tersembunyi." },
+            { name: "The Empress", explanation: "Kreativitas, alam, kesuburan." },
+            { name: "The Emperor", explanation: "Struktur, otoritas, kontrol." },
+            { name: "The Hierophant", explanation: "Tradisi, spiritualitas, nasihat." },
+            { name: "The Lovers", explanation: "Hubungan, pilihan, harmoni." },
+            { name: "The Chariot", explanation: "Tekad, arah, kemenangan." },
+            { name: "Strength", explanation: "Keberanian, belas kasih, kontrol diri." },
+            { name: "The Hermit", explanation: "Introspeksi, pencarian jiwa, kebijaksanaan." },
+            { name: "Wheel of Fortune", explanation: "Perubahan siklus, takdir, keberuntungan." },
+            { name: "Justice", explanation: "Keadilan, kebenaran, tanggung jawab." },
+            { name: "The Hanged Man", explanation: "Pengorbanan, perspektif baru, pelepasan." },
+            { name: "Death", explanation: "Transformasi, akhir, awal yang baru." },
+            { name: "Temperance", explanation: "Keseimbangan, kesabaran, harmoni." },
+            { name: "The Devil", explanation: "Keterikatan, batasan diri, godaan." },
+            { name: "The Tower", explanation: "Perubahan mendadak, kehancuran, kebangkitan." },
+            { name: "The Star", explanation: "Harapan, inspirasi, penyembuhan." },
+            { name: "The Moon", explanation: "Intuisi, ilusi, ketakutan bawah sadar." },
+            { name: "The Sun", explanation: "Kegembiraan, vitalitas, keberhasilan." },
+            { name: "Judgement", explanation: "Penilaian, panggilan jiwa, pembaruan." },
+            { name: "The World", explanation: "Penyelesaian, kepuasan, integrasi." },
+        ];
+
+        let currentTarotCard = { name: "", explanation: "" };
+
+        function getRandomTarotReading() {
+            const randomIndex = Math.floor(Math.random() * tarotCards.length);
+            currentTarotCard = tarotCards[randomIndex];
+        }
+
+        function calculateNeptuJawa(date) {
+            const day = date.toLocaleString('id-ID', { weekday: 'long' });
+            const pasaran = pasaranCycle[date.getDate() % pasaranCycle.length];
+            const neptuHariValue = neptuHariJawa[day];
+            const neptuPasaranValue = neptuPasaranJawa[pasaran];
+            return neptuHariValue + neptuPasaranValue;
+        }
+
+        function getZodiac(month, day) {
+            if ((month === 0 && day >= 20) || (month === 1 && day <= 18)) return "Aquarius";
+            if ((month === 1 && day >= 19) || (month === 2 && day <= 20)) return "Pisces";
+            if ((month === 2 && day >= 21) || (month === 3 && day <= 19)) return "Aries";
+            if ((month === 3 && day >= 20) || (month === 4 && day <= 20)) return "Taurus";
+            if ((month === 4 && day >= 21) || (month === 5 && day <= 21)) return "Gemini";
+            if ((month === 5 && day >= 22) || (month === 6 && day <= 22)) return "Cancer";
+            if ((month === 6 && day >= 23) || (month === 7 && day <= 22)) return "Leo";
+            if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return "Virgo";
+            if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return "Libra";
+            if ((month === 9 && day >= 23) || (month === 10 && day <= 21)) return "Scorpio";
+            if ((month === 10 && day >= 22) || (month === 11 && day <= 21)) return "Sagitarius";
+            return "Capricorn";
+        }
+
+        function getChineseZodiac(year, month, day) {
+            const shio = ["Tikus", "Kerbau", "Macan", "Kelinci", "Naga", "Ular", "Kuda", "Kambing", "Monyet", "Ayam", "Anjing", "Babi"];
+            // Tanggal Tahun Baru Imlek (YYYY, Bulan (0=Januari), Tanggal)
+            const imlekDates = {
+                2025: new Date(2025, 0, 29), // 29 Januari 2025
+                2026: new Date(2026, 1, 17), // 17 Februari 2026
+                2027: new Date(2027, 1, 6),  // 6 Februari 2027
+                2028: new Date(2028, 0, 26), // 26 Januari 2028
+                2029: new Date(2029, 1, 13)  // 13 Februari 2029
+                // Tambahkan tahun-tahun lain sesuai kebutuhan
+            };
+
+            const currentDate = new Date(year, month, day);
+            const imlekDate = imlekDates[year];
+
+            let yearToCheck = year;
+            if (imlekDate && currentDate < imlekDate) {
+                yearToCheck = year - 1;
+            }
+
+            const baseYear = 1924; // Tahun Tikus
+            const offset = (yearToCheck - baseYear) % 12;
+            return shio[offset < 0 ? offset + 12 : offset];
+        }
+
+        // Fungsi untuk mendapatkan tanggal lunar (perkiraan berdasarkan tanggal Imlek)
+        function getLunarDate(year, month, day) {
+            // Daftar tanggal Tahun Baru Imlek (YYYY, Bulan (0=Januari), Tanggal)
+            const imlekDates = {
+                2025: new Date(2025, 0, 29), // 29 Januari 2025
+                2026: new Date(2026, 1, 17), // 17 Februari 2026
+                2027: new Date(2027, 1, 6),  // 6 Februari 2027
+                2028: new Date(2028, 0, 26), // 26 Januari 2028
+                2029: new Date(2029, 1, 13)  // 13 Februari 2029
+                // Tambahkan tahun-tahun lain sesuai kebutuhan
+            };
+
+            const currentDate = new Date(year, month, day);
+            const imlekDate = imlekDates[year];
+
+            if (imlekDate) {
+                const diffDays = Math.floor((currentDate - imlekDate) / (24 * 60 * 60 * 1000));
+                const lunarDay = diffDays + 1;
+                return `${lunarDay}`; // Hanya perkiraan hari lunar setelah Imlek
+            } else {
+                const previousImlekYear = Object.keys(imlekDates).sort((a, b) => b - a).find(y => new Date(y, 0, 1) <= currentDate);
+                if (previousImlekYear) {
+                    const previousImlekDate = imlekDates[previousImlekYear];
+                    const diffDays = Math.floor((currentDate - previousImlekDate) / (24 * 60 * 60 * 1000));
+                    const daysInPreviousLunarYear = 354; // Perkiraan, bisa bervariasi
+                    const lunarDay = diffDays - (new Date(previousImlekYear, 11, 31) - previousImlekDate) / (24 * 60 * 60 * 1000); // Lebih disesuaikan
+                    return `${Math.ceil(lunarDay)}`;
+                }
+                return '-';
+            }
+        }
+
+        function getEgyptianZodiac(month, day) {
+            for (const sign of ramalanMesir) {
+                const date = new Date(currentYear, month, day);
+                const startDate = new Date(currentYear, sign.start.month, sign.start.day);
+                const endDate = new Date(currentYear, sign.end.month, sign.end.day, 23, 59, 59, 999);
+                const altStartDate = sign.alt_start ? new Date(currentYear, sign.alt_start.month, sign.alt_start.day) : null;
+                const altEndDate = sign.alt_end ? new Date(currentYear, sign.alt_end.month, sign.alt_end.day, 23, 59, 59, 999) : null;
+                const thirdStartDate = sign.third_start ? new Date(currentYear, sign.third_start.month, sign.third_start.day) : null;
+                const thirdEndDate = sign.third_end ? new Date(currentYear, sign.third_start.month, sign.third_end.day, 23, 59, 59, 999) : null;
+
+                startDate.setFullYear(currentYear);
+                endDate.setFullYear(currentYear);
+                if (altStartDate) altStartDate.setFullYear(currentYear);
+                if (altEndDate) altEndDate.setFullYear(currentYear);
+                if (thirdStartDate) thirdStartDate.setFullYear(currentYear);
+                if (thirdEndDate) thirdEndDate.setFullYear(currentYear);
+
+                if ((date >= startDate && date <= endDate) ||
+                    (altStartDate && date >= altStartDate && date <= altEndDate) ||
+                    (thirdStartDate && date >= thirdStartDate && date <= thirdEndDate)) {
+                    return sign;
+                }
+            }
+            return null;
+        }
+
+        function generateCalendar(month, year) {
+            calendar.innerHTML = "";
+            monthYear.textContent = new Date(year, month, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            document.getElementById('monthYear').style.display = 'none';
+            document.getElementById('monthYearNav').textContent = new Date(year, month, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            neptuHarian = {};
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let searchedDay = -1;
+            if (selectedDate && selectedDate.getMonth() === month && selectedDate.getFullYear() === year) {
+                searchedDay = selectedDate.getDate();
+            }
+
+            hari.forEach(h => {
+                calendar.innerHTML += `<div class="header ${h === "Minggu" ? "sunday" : ""}">${h}</div>`;
+            });
+
+            for (let i = 0; i < firstDay; i++) calendar.innerHTML += `<div></div>`;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const totalNeptu = calculateNeptuJawa(date);
+                neptuHarian[d] = totalNeptu;
+                const saptawaraIndex = date.getDay();
+                const selisihHari = Math.floor((date - new Date(2025, 3, 18)) / (24 * 60 * 60 * 1000));
+                const pasaranIndex = ((selisihHari % 5) + 5) % 5;
+                const pasaranName = pasaran[pasaranIndex];
+                const isToday = d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+                const isSunday = saptawaraIndex === 0;
+                const isSearchedDay = d === searchedDay;
+                calendar.innerHTML += `
+                    <div class="day ${isSunday ? "sunday" : ""} ${isToday ? "today" : ""} ${isSearchedDay ? "searched-day" : ""}" id="day-${d}" onclick="showDetail(${year}, ${month}, ${d}, ${pasaranIndex})">
+                        ${d}<br/>
+                        <div class="pasaran-label">${pasaranName}</div>
+                    </div>
+                `;
+            }
+             if (searchedDay !== -1) {
+                const searchedDayElement = document.querySelector('.searched-day');
+                if (searchedDayElement) {
+                    searchedDayElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'center'
+                    });
+                }
+            }
+            // Update month and year display in the navigation
+            // document.querySelector('.nav span').textContent = new Date(year, month, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        }
+
+        function showDetail(y, m, d, pasaranIndex) {
+            detail.style.display = 'grid';
+            const tgl = new Date(y, m, d);
+            selectedDate = tgl;
+            selectedPasaranIndex = pasaranIndex;
+            const iso = tgl.toISOString().split('T')[0];
+            const libur = liburNasional[iso] || '-';
+
+            const selisihHariBase = Math.floor((tgl - new Date(2025, 3, 18)) / (24 * 60 * 60 * 1000));
+            const namaPasaranBase = pasaran[pasaranIndex];
+            const namaHari = hari[tgl.getDay()];
+
+            const neptuHariBase = [5, 4, 3, 7, 8, 6, 9][tgl.getDay()];
+            const neptuPasaranBase = [8, 5, 9, 7, 4][pasaranIndex];
+            const totalNeptu = neptuHariBase + neptuPasaranBase;
+
+            let neptuResultHTML = `
+                <div class="neptu-detail">
+                    <h4>Hasil Perhitungan Neptu</h4>
+                    <p><strong>Tanggal:</strong> ${tgl.toLocaleDateString('id-ID')}</p>
+                    <p><strong>Hari:</strong> ${namaHari}</p>
+                    <p><strong>Pasaran:</strong> ${namaPasaranBase}</p>
+                    <p><strong>Jumlah Neptu:</strong> ${totalNeptu}</p>
+                    <table class="neptu-value-table">
+                        <tr><th>Usia</th><th>Nilai</th><th>Keterangan</th></tr>
+            `;
+
+            const descriptions = {
+                0: "Kesakitan (Penderitaan dan Ujian Hidup)",
+                1: "Penghasilan atau Pemasukan Sedikit",
+                2: "Penghasilan sedang atau Cukup",
+                3: "Penghasilan Baik",
+                4: "Penghasilan Besar",
+                5: "Penghasilan Baik dan Hidup senang",
+                7: "Hidup mewah dan Sempurna",
+                8: "Hidup Berhasil dan Mewah berkelanjutan diteruskan oleh keturunan"
+            };
+
+            if (neptuValues[totalNeptu]) {
+                neptuValues[totalNeptu].forEach(row => {
+                    const description = descriptions[row.value] || "Deskripsi tidak tersedia";
+                    neptuResultHTML += `<tr><td>${row.age}</td><td>${row.value}</td><td>${description}</td></tr>`;
+                });
+          } else {
+                neptuResultHTML += `<tr><td colspan="3">Data tidak tersedia untuk jumlah neptu ini.</td></tr>`;
+            }
+
+            neptuResultHTML += `</table></div>`;
+
+            const baseDateJawa = new Date(1990, 1, 1); // 1 Januari 1990 = Senin Pahing  Wuku Langkir
+            const baseJawa = { tanggal: 1, bulan: 1, tahun: 1900 }; // 18 Ruwah 1829 AJ
+            const selisihHariJawa = Math.floor((tgl - baseDateJawa) / (24 * 60 * 60 * 1000));
+            const jawaTanggal = baseJawa.tanggal + selisihHariJawa;
+            let jawaBulan = baseJawa.bulan;
+            let jawaTahun = baseJawa.tahun;
+            let tglJawa = jawaTanggal;
+
+            while (tglJawa > 30) {
+                tglJawa -= 30;
+                jawaBulan++;
+                if (jawaBulan > 12) {
+                    jawaBulan = 1;
+                    jawaTahun++;
+                }
+            }
+
+            const namaBulanJawa = [
+                "Sura", "Sapar", "Mulud", "Bakda Mulud", "Jumadil Awal", "Jumadil Akhir",
+                "Rejeb", "Ruwah", "Pasa", "Sawal", "Dulkaidah", "Besar"
+            ];
+
+            const tanggalHijri = new Intl.DateTimeFormat('id-TN-u-ca-islamic', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            }).format(tgl);
+
+            const tanggalChina = new Intl.DateTimeFormat('zh-Hans-CN-u-ca-chinese', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            }).format(tgl);
+
+
+            const sadwaraIndex = ((selisihHariBase + 2) % 6 + 6) % 6;
+
+            // Perhitungan Wuku
+            const baseDateWuku = new Date(1899, 11, 31); // Sunday before Jan 1, 1900
+            const tglAwalMinggu = new Date(y, m, d - new Date(y, m, d).getDay()); // Get the Sunday of the current week
+            const selisihMinggu = Math.floor((tglAwalMinggu - baseDateWuku) / (7 * 24 * 60 * 60 * 1000));
+            const wukuIndex = selisihMinggu % 30; // Starting from Sinta (index 0)
+            // We know that the week of 1900-01-01 was Wuku Langkir (index 12)
+            // So we need to offset the index.
+            const offsetWuku = 12;
+            currentWuku = wukuList[(wukuIndex + offsetWuku) % 30];
+            const namaWuku = currentWuku.nama;
+            const deskripsiWuku = currentWuku.deskripsi;
+            const kerisWuku = currentWuku.keris;
+            const zodiak = getZodiac(m, d); // Bulan dimulai dari 0
+            const shio = getChineseZodiac(y, m, d);
+            const tanggalLunar = getLunarDate(y, m, d);
+
+            const neptuSriLungguh = totalNeptu % 5;
+            const neptuPatiMati = totalNeptu % 4;
+
+            let artiSriLungguh = "";
+            switch (neptuSriLungguh) {
+                case 1:
+                    artiSriLungguh = "Sri, artinya Murah rejeki (Rejeki datang dari mana saja)";
+                    break;
+                case 2:
+                    artiSriLungguh = "Lungguh, artinya Kecukupan dalam perjalanan hidup";
+                    break;
+                case 3:
+                    artiSriLungguh = "Gendhong, artinya Mapan dalam segala hal yang berkaitan dengan lahiriah";
+                    break;
+                case 4:
+                    artiSriLungguh = "Loro, artinya sakit-sakitan (tidak hanya sakit fisik, tetapi bisa batin, dan sakit dari perjalanan hidup yang selalu gagal dalam usaha)";
+                    break;
+                case 0:
+                    artiSriLungguh = "Pati, artinya apapun yang dilakukan selalu gagal dan selalu mendapatkan jalan buntu (tidak bisa menghasilkan apa-apa)";
+                    break;
+            }
+
+            let artiPatiMati = "";
+            switch (neptuPatiMati) {
+                case 1:
+                    artiPatiMati = "Gunung Arti kejadian dan urutan ini dalam neptu kematian menurut primbon memiliki makna bahwa kematian seseorang yang neptunya jatuh pada kategori Gunung maka artinya kelak ahli waris yang ditinggalkan akan mendapatkan kehidupan yang mulia.";
+                    break;
+                case 2:
+                    artiPatiMati = "Guntur Arti kejadian dan urutan ini dalam neptu kematian menurut primbon memiliki makna bahwa kematian seseorang yang neptunya jatuh pada kategori ini berarti orang yang ditinggalkan atau ahli waris akan mendapat kesulitan.";
+                    break;
+                case 3:
+                    artiPatiMati = "Segoro Arti kejadian dan urutan ini dalam neptu kematian menurut primbon memiliki makna bahwa kematian seseorang yang neptunya jatuh pada kategori ini berarti orang yang ditinggalkan akan menghadapi situasi dimudahkannya mencari penghasilan atau rezeki.";
+                    break;
+                case 0:
+                    artiPatiMati = "Asat Arti kejadian dan urutan ini dalam neptu kematian menurut primbon memiliki makna bahwa kematian seseorang yang neptunya jatuh pada kategori ini berarti ahli waris yang ditinggalkan tidak akan berkecukupan rezekinya.";
+                    break;
+            }
+
+            let arahMeditasi = "";
+            if (totalNeptu === 7 || totalNeptu === 11 || totalNeptu === 15) {
+                arahMeditasi = "Kulon - Barat";
+            } else if (totalNeptu === 8 || totalNeptu === 12 || totalNeptu === 16) {
+                arahMeditasi = "Lor - Utara";
+            } else if (totalNeptu === 9 || totalNeptu === 13 || totalNeptu === 17) {
+                arahMeditasi = "Wetan - Timur";
+            } else if (totalNeptu === 10 || totalNeptu === 14 || totalNeptu === 18) {
+                arahMeditasi = "Kidul - Selatan";
+            }
+
+            let puasaPancatan = "";
+            const currentDate = new Date(y, m, d);
+            const kemarin = new Date(currentDate);
+            kemarin.setDate(currentDate.getDate() - 1);
+            const duaHariLalu = new Date(currentDate);
+            duaHariLalu.setDate(currentDate.getDate() - 2);
+
+            const neptuHariIni = calculateNeptuJawa(currentDate);
+            const neptuKemarinValue = calculateNeptuJawa(kemarin);
+            const neptuDuaHariLaluValue = calculateNeptuJawa(duaHariLalu);
+
+            if (neptuHariIni + neptuKemarinValue + neptuDuaHariLaluValue === 40) {
+                puasaPancatan = "Kondisi Puasa Pancatan: Ya (3 hari total neptu 40)";
+            } else {
+                puasaPancatan = "Kondisi Puasa Pancatan: Tidak";
+            }
+
+            // Numerology Calculation
+            const lifePathNumber = calculateLifePathNumber(y, m + 1, d); // Month is 0-indexed in Date
+
+            const detailTime = document.getElementById('timeInput').value;
+            const sunriseSunsetResult = "Sekitar 5:51 AM / 5:50 PM"; // Hasil pencarian sebelumnya
+            const moonPhaseResult = "Waning Gibbous"; // Hasil pencarian sebelumnya
+
+            let moonPhaseDescription = "";
+            switch (moonPhaseResult) {
+                case "New Moon":
+                    moonPhaseDescription = "Fase ketika Bulan tidak terlihat di langit karena berada di antara Bumi dan Matahari. Dalam astrologi, fase ini sering dikaitkan dengan awal yang baru dan tujuan yang ingin dicapai.";
+                    break;
+                case "First Quarter":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat setengah lingkaran, dengan sisi kanan (dari perspektif kita) yang menyala. Fase ini melambangkan tindakan dan keberanian untuk memulai.";
+                    break;
+                case "Full Moon":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat penuh dan bulat sempurna karena berada di sisi Bumi yang menghadap Matahari. Fase ini dikaitkan dengan keberhasilan dan pencapaian, serta pembersihan energi negatif.";
+                    break;
+                case "Last Quarter":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat setengah lingkaran, namun sisi kiri (dari perspektif kita) yang menyala. Fase ini melambangkan penarikan diri, refleksi, dan penyelesaian.";
+                    break;
+                case "Waxing Crescent":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat sebagai sabit tipis yang semakin membesar. Fase ini dikaitkan dengan pertumbuhan dan perencanaan.";
+                    break;
+                case "Waxing Gibbous":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat lebih dari setengah lingkaran namun belum penuh. Fase ini melambangkan persiapan untuk keberhasilan yang lebih besar.";
+                    break;
+                case "Waning Gibbous":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat lebih dari setengah lingkaran namun semakin mengecil. Fase ini dikaitkan dengan kesadaran akan risiko dan potensi masalah.";
+                    break;
+                case "Waning Crescent":
+                    moonPhaseDescription = "Fase ketika Bulan terlihat sebagai sabit tipis yang semakin mengecil. Fase ini melambangkan penarikan diri dan refleksi.";
+                    break;
+                default:
+                    moonPhaseDescription = "Informasi fase bulan tidak tersedia.";
+                    break;
+            }
+
+            const dayOfWeek = tgl.getDay(); // 0 = Minggu, 1 = Senin, ..., 6 = Sabtu
+            const luckyColors = ["Kuning/Emas", "Biru", "Hijau", "Cokelat/Abu-abu", "Merah/Oranye", "Pink/Ungu", "Hitam/Abu-abu"];
+            const luckyColor = luckyColors[dayOfWeek];
+            const luckyColorExplanation = "Warna ini diasosiasikan dengan energi dan karakteristik hari ini.";
+
+            const egyptianSign = getEgyptianZodiac(m, d + 1);
+            let egyptianZodiacInfo = "";
+            if (egyptianSign) {
+                egyptianZodiacInfo = `
+                    <div class="ramalan-mesir">
+                        <strong>Ramalan Mesir Kuno: ${egyptianSign.name}</strong><br>
+                        Karakteristik: ${egyptianSign.characteristics}<br>
+                        Ramalan: ${egyptianSign.ramalan}
+                    </div>
+                `;
+            }
+
+            const today = new Date();
+            const diffTime = Math.abs(today - tgl);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            let age = today.getFullYear() - tgl.getFullYear();
+            const monthDiff = today.getMonth() - tgl.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < tgl.getDate())) {
+                age--;
+            }
+
+            const hariNaasList = [];
+            const wasCounts = [3, 5, 7, 11];
+
+            // Patokan pasaran: 1 Januari 1940 = Senin Legi
+            const patokan = new Date('1940-01-01');
+            const patokanPasaranIndex = 1; // Legi
+
+            wasCounts.forEach(count => {
+                const wasDate = new Date(tgl);
+                wasDate.setDate(wasDate.getDate() + (count - 1)); // Karena hari input dihitung sebagai hari ke-1
+
+                const wasHari = hari[wasDate.getDay()];
+
+                const selisihHariWas = Math.floor((wasDate - patokan) / (24 * 60 * 60 * 1000));
+                const wasPasaranIndex = (patokanPasaranIndex + selisihHariWas % 5 + 5) % 5;
+                const wasPasaran = pasaranCycle[wasPasaranIndex];
+
+                hariNaasList.push(`Was ${count}: ${wasHari} ${wasPasaran}`);
+            });
+
+            const hariNaasText = hariNaasList.map(item => `- ${item}`).join('\n');
+
+            const arahRejekiWuku = getArahRejeki(namaWuku);
+
+            const selamatanDetails = calculateSelamatanDetails(tgl, namaPasaranBase);
+
+            const waText = `Tanggal: ${tgl.toLocaleDateString('id-ID')}\n\nWaktu: ${detailTime}\n\nUsia (saat ini): ${age} tahun\n\nHari: ${namaHari} (${sifatHari[namaHari]}) ${namaPasaranBase} (${sifatPasaran[namaPasaranBase]})\n\nWuku: ${namaWuku}.\n\nSadwara: ${sadwaraList[sadwaraIndex]}\n\nNeptu: ${totalNeptu}\n\nHijriah: ${tanggalHijri}\n\nChina: ${tanggalChina}\n\nJawa: ${tglJawa} ${namaBulanJawa[jawaBulan - 1]} ${jawaTahun} AJ\n\nZodiak: ${zodiak}\n\nTanggal Lunar (Perkiraan): ${tanggalLunar}\n\nShio: ${shio}\n\nJumlah Hari (dari hari ini): ${diffDays} hari\n\nHari Naas:\n${hariNaasText}\n\nArti Neptu: ${artiSriLungguh}\n\nArti Neptu Kematian: ${artiPatiMati}\n\nArah Meditasi: ${arahMeditasi}\n\nArah Rejeki Wuku: ${arahRejekiWuku}\n\n${puasaPancatan}\n\n*Hari Selamatan:*\n${selamatanDetails}\n\nAngka Takdir Numerologi: ${lifePathNumber} - ${getNumerologyExplanation(lifePathNumber)}\n\nWuku: ${namaWuku}\n\nInformasi Wuku ${namaWuku}:\n\n${currentWuku.deskripsi.replace(/<\/?[^>]+(>|$)/g, "").replace("Dewanya", "\n\nDewanya")}\n\nKeris yang Cocok: ${currentWuku.keris.join(', ')}\n\n${currentWuku.wulanKarahinan ? `Wulan Karahinan: ${currentWuku.wulanKarahinan}` : ''}\n\n${currentWuku.aralnya ? `Aralnya: ${currentWuku.aralnya}` : ''}\n\n${currentWuku.sedekahSesaji ? `Sedekah Sesaji: ${currentWuku.sedekahSesaji}` : ''}\n\n${currentWuku.kebaikan ? `Kebaikan: ${currentWuku.kebaikan}` : ''}\n\n${currentWuku.keburukan ? `Keburukan: ${currentWuku.keburukan}` : ''}\n\n*Detail Neptu Berdasarkan Usia:*\nTanggal: ${tgl.toLocaleDateString('id-ID')}\nHari: ${namaHari}\nPasaran: ${namaPasaranBase}\nJumlah Neptu: ${totalNeptu}\nUsia | Nilai | Keterangan\n------- | -------- | --------\n${neptuValues[totalNeptu] ? neptuValues[totalNeptu].map(item => `${item.age} | ${item.value} | ${descriptions[item.value] || 'Deskripsi tidak tersedia'}`).join('\n') : 'Data tidak tersedia untuk jumlah neptu ini.'}\n\nTarot Hari Ini: ${currentTarotCard.name} - ${currentTarotCard.explanation}\n\nMatahari (Bekasi): ${sunriseSunsetResult}\n\nBulan: ${moonPhaseResult} - ${moonPhaseDescription}\n\nWarna Keberuntungan: ${luckyColor} - ${luckyColorExplanation}\n\nRamalan Mesir Kuno: ${egyptianSign ? `${egyptianSign.name} - Karakteristik: ${egyptianSign.characteristics} - Ramalan: ${egyptianSign.ramalan}` + "\n\nBy Tius": 'Tidak ditemukan'}`;
+
+            const waLink = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+
+            detail.innerHTML = `
+                <h3>Detail Tanggal: ${tgl.toLocaleDateString('id-ID')}</h3>
+                <p><strong>Cara kembali ke kalender:</strong> Gulir ke atas halaman ini.</p>
+                <ul>
+                    <li><strong>Hari:</strong> ${namaHari}</li>
+                    <li><strong>Sifat Hari:</strong> ${sifatHari[namaHari]}</li>
+                    <li><strong>Hari Pasaran:</strong> ${namaPasaranBase}</li>
+                    <li><strong>Sifat Pasaran:</strong> ${sifatPasaran[namaPasaranBase]}</li>
+                    <li><strong>Neptu:</strong> ${totalNeptu} (${neptuHariBase} + ${neptuPasaranBase})</li>
+                    <li><strong>Tanggal Hijriah:</strong> ${tanggalHijri}</li>
+                    <li><strong>Tanggal China:</strong> ${tanggalChina}</li>
+                    <li><strong>Tanggal Jawa:</strong> ${tglJawa} ${namaBulanJawa[jawaBulan - 1]} ${jawaTahun} AJ</li>
+                   <li><strong>Wuku:</strong> ${namaWuku}</li>
+                    <li><strong>Sadwara / Paringkelan:</strong> ${sadwaraList[sadwaraIndex]}</li>
+                    <li><strong>Zodiak:</strong> ${zodiak}</li>
+                    <li><strong>Tanggal Lunar (Perkiraan):</strong> ${tanggalLunar}</li>
+                    <li><strong>Shio:</strong> ${shio}</li>
+                    <li><strong>Usia (saat ini):</strong> ${age} tahun</li>
+                    <li><strong>Jumlah Hari (dari hari ini):</strong> ${diffDays} hari</li>
+                    <li><strong>Hari Naas:</strong> <ul>${hariNaasList.map(day => `<li>${day}</li>`).join('')}</ul></li>
+                    <li><strong>Arti Neptu:</strong> ${artiSriLungguh}</li>
+                    <li><strong>Arti Neptu Kematian:</strong> ${artiPatiMati}</li>
+                    <li><strong>Arah Meditasi:</strong> ${arahMeditasi}</li>
+                    <li><strong>Kondisi Puasa Pancatan:</strong> Tidak</li>
+                    <li><strong>Angka Takdir Numerologi:</strong> ${lifePathNumber}</li>
+                    <li><strong>Penjelasan Numerologi:</strong> ${getNumerologyExplanation(lifePathNumber)}</li>
+                    <li><strong>Tarot Hari Ini:</strong></li>
+                        <p id="tarot-result" style="font-style: italic;">${currentTarotCard.name}</p>
+                        <p id="tarot-explanation" style="font-size: 0.9em;">${currentTarotCard.explanation}</p>
+                    <li><strong>Matahari (Bekasi):</strong> ${sunriseSunsetResult}</li>
+                    <li><strong>Bulan:</strong> ${moonPhaseResult} - ${moonPhaseDescription}</li>
+                    <li><strong>Warna Keberuntungan:</strong> ${luckyColor}</li>
+                    <li><strong>Penjelasan Warna:</strong> ${luckyColorExplanation}</li>
+                    <li><strong>Libur Nasional:</strong> ${libur}</li>
+                </ul>
+                ${neptuResultHTML}
+                <div class="wuku-detail">
+                    <h4>Informasi Wuku ${namaWuku}</h4>
+                    <p style="word-break: break-word;">${currentWuku.deskripsi.replace(/<\/?[^>]+(>|$)/g, "").replace("Dewanya", "<br>Dewanya")}</p>
+                    <p><strong>Keris yang Cocok:</strong> ${currentWuku.keris.join(', ')}</p>
+                    ${currentWuku.wulanKarahinan ? `<p><strong>Wulan Karahinan:</strong> ${currentWuku.wulanKarahinan}</p>` : ''}
+                    ${currentWuku.aralnya ? `<p><strong>Aralnya:</strong> ${currentWuku.aralnya}</p>` : ''}
+                    ${currentWuku.sedekahSesaji ? `<p><strong>Sedekah Sesaji:</strong> ${currentWuku.sedekahSesaji}</p>` : ''}
+                    ${currentWuku.kebaikan ? `<p><strong>Kebaikan:</strong> ${currentWuku.kebaikan}</p>` : ''}
+                    ${currentWuku.keburukan ? `<p><strong>Keburukan:</strong> ${currentWuku.keburukan}</p>` : ''}
+                    ${currentWuku.gedhongDepan ? `<p><strong>Gedhong Depan:</strong> ${currentWuku.gedhongDepan}</p>` : ''}
+                    ${currentWuku.kakiBerendam ? `<p><strong>Kaki Berendam:</strong> ${currentWuku.kakiBerendam}</p>` : ''}
+                    ${currentWuku.sorotingSrengenge ? `<p><strong>Soroting Srengenge:</strong> ${currentWuku.sorotingSrengenge}</p>` : ''}
+                    ${currentWuku.burungnyaManyar ? `<p><strong>Burungnya Manyar:</strong> ${currentWuku.burungnyaManyar}</p>` : ''}
+                    ${currentWuku.wukirAsri ? `<p><strong>Wukir Asri:</strong> ${currentWuku.wukirAsri}</p>` : ''}
+                    ${currentWuku.pohonnyaIngas ? `<p><strong>Pohonnya Ingas:</strong> ${currentWuku.pohonnyaIngas}</p>` : ''}
+                    ${currentWuku.burungnyaSlindhitan ? `<p><strong>Burungnya Slindhitan:</strong> ${currentWuku.burungnyaSlindhitan}</p>` : ''}
+                    ${currentWuku.gedhongTerbalik ? `<p><strong>Gedhong Terbalik:</strong> ${currentWuku.gedhongTerbalik}</p>` : ''}
+                    ${currentWuku.angiwakakeBanyu ? `<p><strong>Angiwakake Banyu:</strong> ${currentWuku.angiwakakeBanyu}</p>` : ''}
+                    ${currentWuku.membawaUmbulUmbul ? `<p><strong>Membawa Umbul-umbul:</strong> ${currentWuku.membawaUmbulUmbul}</p>` : ''}
+                    ${currentWuku.wukuKurantil ? `<p><strong>Wuku Kurantil:</strong> ${currentWuku.wukuKurantil}</p>` : ''}
+                    ${currentWuku.kurantilIbaratBurung ? `<p><strong>Kurantil Ibarat Burung:</strong> ${currentWuku.kurantilIbaratBurung}</p>` : ''}
+                    ${currentWuku.umbulUmbulBelakang ? `<p><strong>Umbul-umbul Belakang:</strong> ${currentWuku.umbulUmbulBelakang}</p>` : ''}
+                    ${currentWuku.wukuTolu ? `<p><strong>Wuku Tolu:</strong> ${currentWuku.wukuTolu}</p>` : ''}
+                    ${currentWuku.pohonnyaBeringin ? `<p><strong>Pohonnya Beringin:</strong> ${currentWuku.pohonnyaBeringin}</p>` : ''}
+                    ${currentWuku.burungnyaAyamAlas ? `<p><strong>Burungnya Ayam Alas:</strong> ${currentWuku.burungnyaAyamAlas}</p>` : ''}
+                    ${currentWuku.gedhongKiri ? `<p><strong>Gedhong Kiri:</strong> ${currentWuku.gedhongKiri}</p>` : ''}
+                    ${currentWuku.gumbregGeter ? `<p><strong>Gumbreg Geter:</strong> ${currentWuku.gumbregGeter}</p>` : ''}
+                    ${currentWuku.pohonnyaSulkastri ? `<p><strong>Pohonnya Sulkastri:</strong> ${currentWuku.pohonnyaSulkastri}</p>` : ''}
+                    ${currentWuku.menghadapCandi ? `<p><strong>Menghadap Candi:</strong> ${currentWuku.menghadapCandi}</p>` : ''}
+                    ${currentWuku.warigalitTanNganti ? `<p><strong>Warigalit Tan Nganti:</strong> ${currentWuku.warigalitTanNganti}</p>` : ''}
+                    ${currentWuku.burungnyaBethet ? `<p><strong>Burungnya Bethet:</strong> ${currentWuku.burungnyaBethet}</p>` : ''}
+                    ${currentWuku.gedhongDepanBelakang ? `<p><strong>Gedhong Depan dan Belakang:</strong> ${currentWuku.gedhongDepanBelakang}</p>` : ''}
+                    ${currentWuku.warigagungKethuk ? `<p><strong>Warigagung Kethuk:</strong> ${currentWuku.warigagungKethuk}</p>` : ''}
+                    ${currentWuku.pohonnyaCempaka ? `<p><strong>Pohonnya Cempaka:</strong> ${currentWuku.pohonnyaCempaka}</p>` : ''}
+                    ${currentWuku.burungnyaKutilang ? `<p><strong>Burungnya Kutilang:</strong> ${currentWuku.burungnyaKutilang}</p>` : ''}
+                    ${currentWuku.julungWangiBanteng ? `<p><strong>Julungwangi Banteng:</strong> ${currentWuku.julungWangiBanteng}</p>` : ''}
+                    ${currentWuku.julungPujudLengkawa ? `<p><strong>Julungpujud Lengkawa:</strong> ${currentWuku.julungPujudLengkawa}</p>` : ''}
+                    ${currentWuku.merekaBerwuku ? `<p><strong>Mereka Berwuku:</strong> ${currentWuku.merekaBerwuku}</p>` : ''}
+                    ${currentWuku.memangdhiPraja ? `<p><strong>Memangdhi Praja:</strong> ${currentWuku.memangdhiPraja}</p>` : ''}
+                    ${currentWuku.pahangOra ? `<p><strong>Pahang Ora:</strong> ${currentWuku.pahangOra}</p>` : ''}
+                    ${currentWuku.kuruwelutAir ? `<p><strong>Kuruwelut Air:</strong> ${currentWuku.kuruwelutAir}</p>` : ''}
+                    ${currentWuku.marakehDamar ? `<p><strong>Marakeh Damar:</strong> ${currentWuku.marakehDamar}</p>` : ''}
+                    ${currentWuku.tambirAnggara ? `<p><strong>Tambir Anggara:</strong> ${currentWuku.tambirAnggara}</p>` : ''}
+                    ${currentWuku.madangkunganUnen ? `<p><strong>Madangkungan Unen:</strong> ${currentWuku.madangkunganUnen}</p>` : ''}
+                    ${currentWuku.doanyaNguwur ? `<p><strong>Doanya Nguwur:</strong> ${currentWuku.doanyaNguwur}</p>` : ''}
+                    ${currentWuku.gedhongAtas ? `<p><strong>Gedhong Atas:</strong> ${currentWuku.gedhongAtas}</p>` : ''}
+                    ${currentWuku.maktalPancawara ? `<p><strong>Maktal Pancawara:</strong> ${currentWuku.maktalPancawara}</p>` : ''}
+                    ${currentWuku.wuyeMasangi ? `<p><strong>Wuye Masangi:</strong> ${currentWuku.wuyeMasangi}</p>` : ''}
+                    ${currentWuku.manahilLintang ? `<p><strong>Manahil Lintang:</strong> ${currentWuku.manahilLintang}</p>` : ''}
+                    ${currentWuku.prgBakatAnggarakasih ? `<p><strong>Prangbakat Anggarakasih:</strong> ${currentWuku.prgBakatAnggarakasih}</p>` : ''}
+                    ${currentWuku.balaSarwa ? `<p><strong>Bala Sarwa:</strong> ${currentWuku.balaSarwa}</p>` : ''}
+                    ${currentWuku.wuguAngkasa ? `<p><strong>Wugu Angkasa:</strong> ${currentWuku.wuguAngkasa}</p>` : ''}
+                    ${currentWuku.wayangPradangga ? `<p><strong>Wayang Pradangga:</strong> ${currentWuku.wayangPradangga}</p>` : ''}
+                    ${currentWuku.kulawuMenikah ? `<p><strong>Kulawu Menikah:</strong> ${currentWuku.kulawuMenikah}</p>` : ''}
+                    ${currentWuku.dukutKitri ? `<p><strong>Dukut Kitri:</strong> ${currentWuku.dukutKitri}</p>` : ''}
+                    ${currentWuku.wtGunungGerah ? `<p><strong>Watugunung Gerah:</strong> ${currentWuku.wtGunungGerah}</p>` : ''}
+                </div>
+                <div class="selamatan-section">
+                    <h4>Perhitungan Hari Selamatan</h4>
+                    <div class="selamatan-form">
+                        <label for="tanggalMeninggal">Tanggal Meninggal:</label>
+                        <input type="date" id="tanggalMeninggal" value="${tgl.toISOString().split('T')[0]}" />
+                        <label for="pasaranMeninggal">Pasaran Meninggal:</label>
+                        <select id="pasaranMeninggal">
+                            <option value="Wage" ${namaPasaranBase === 'Wage' ? 'selected' : ''}>Wage</option>
+                            <option value="Kliwon" ${namaPasaranBase === 'Kliwon' ? 'selected' : ''}>Kliwon</option>
+                            <option value="Legi" ${namaPasaranBase === 'Legi' ? 'selected' : ''}>Legi</option>
+                            <option value="Pahing" ${namaPasaranBase === 'Pahing' ? 'selected' : ''}>Pahing</option>
+                            <option value="Pon" ${namaPasaranBase === 'Pon' ? 'selected' : ''}>Pon</option>
+                        </select>
+                        <button type="button" onclick="hitungHariSelamatan(new Date('${tgl.toISOString().split('T')[0]}'), '${namaPasaranBase}')">Hitung</button>
+                    </div>
+                    <div id="hasilSelamatan"></div>
+                </div>
+                <p><strong>Arah Rejeki Berdasarkan Wuku ${namaWuku}:</strong> <span id="arahRejeki">${arahRejekiWuku}</span></p>
+                ${egyptianZodiacInfo}
+                <a class="wa-share" href="${waLink}" target="_blank">Bagikan ke WhatsApp</a>
+                <button class="copy-detail" onclick="copyDetailToClipboard()">Salin Detail</button>
+            `;
+            hitungHariSelamatan(tgl, namaPasaranBase);
+
+            neptuDuaHariLalu = neptuKemarin;
+            neptuKemarin = totalNeptu;
+            detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function getArahRejeki(wuku) {
+            for (const arah in arahRejeki) {
+                if (arahRejeki[arah].includes(wuku)) {
+                    return arah;
+                }
+            }
+            return "Tidak ditemukan";
+        }
+
+        function calculateSelamatanDetails(tanggalMeninggalInput, pasaranMeninggal) {
+            const tanggalMeninggal = tanggalMeninggalInput;
+            const hariMeninggal = tanggalMeninggal.getDay(); // 0=Minggu, 1=Senin, ...
+            const namaPasaranMeninggal = pasaranMeninggal;
+            let selamatanText = "";
+
+            const perhitungan = [
+                { hari: 3, keterangan: 'Hari ke-3' },
+                { hari: 7, keterangan: 'Hari ke-7' },
+                { hari: 40, keterangan: 'Hari ke-40', rumus: (tgl) => {
+                    const tanggal40 = new Date(tgl);
+                    tanggal40.setDate(tgl.getDate() + 39);
+                    return tanggal40;
+                }},
+                { hari: 100, keterangan: 'Hari ke-100', rumus: (tgl) => {
+                    const tanggal100 = new Date(tgl);
+                    let hitungBulan = 0;
+                    const tanggalAwal = new Date(tgl);
+                    while(hitungBulan < 3) {
+                        tanggalAwal.setDate(tanggalAwal.getDate() + 30);
+                        hitungBulan++;
+                        if (hitungBulan === 3) break;
+                    }
+                    tanggalAwal.setDate(tanggalAwal.getDate() + 10 - (hitungBulan * 30 - 90));
+                    return tanggalAwal;
+                }},
+                { hari: 1000, keterangan: 'Hari ke-1000', rumus: (tgl) => {
+                    const tanggal1000 = new Date(tgl);
+                    tanggal1000.setDate(tgl.getDate() + 999);
+                    return tanggal1000;
+                }}
+            ];
+
+            perhitungan.forEach(item => {
+                let tanggalSelamatan;
+                if (item.rumus) {
+                    tanggalSelamatan = item.rumus(tanggalMeninggal);
+                } else {
+                    tanggalSelamatan = new Date(tanggalMeninggal);
+                    tanggalSelamatan.setDate(tanggalMeninggal.getDate() + item.hari - 1);
+                }
+                const namaHariSelamatan = hari[tanggalSelamatan.getDay()];
+
+                // Hitung pasaran untuk hari selamatan
+                const patokanPasaranIndex = [4, 3, 2, 1, 0][["Wage", "Kliwon", "Legi", "Pahing", "Pon"].indexOf(namaPasaranMeninggal)];
+                let selisihHari = Math.floor((tanggalSelamatan - tanggalMeninggal) / (1000 * 60 * 60 * 24));
+                let pasaranIndex = (patokanPasaranIndex + selisihHari) % 5;
+                const namaPasaranSelamatan = pasaran[pasaranIndex];
+
+                selamatanText += `${item.keterangan}: ${namaHariSelamatan}, ${namaPasaranSelamatan} (${tanggalSelamatan.toLocaleDateString('id-ID')})\n`;
+            });
+
+            return selamatanText;
+        }
+
+        function hitungHariSelamatan(tanggalMeninggalInput, pasaranMeninggal) {
+            const hasilSelamatanDiv = document.getElementById('hasilSelamatan');
+            const tanggalMeninggal = tanggalMeninggalInput;
+            const hariMeninggal = tanggalMeninggal.getDay(); // 0=Minggu, 1=Senin, ...
+            const namaPasaranMeninggal = pasaranMeninggal;
+
+            const perhitungan = [
+                { hari: 3, keterangan: 'Hari ke-3' },
+                { hari: 7, keterangan: 'Hari ke-7' },
+                { hari: 40, keterangan: 'Hari ke-40', rumus: (tgl) => {
+                    const tanggal40 = new Date(tgl);
+                    tanggal40.setDate(tgl.getDate() + 39);
+                    return tanggal40;
+                }},
+                { hari: 100, keterangan: 'Hari ke-100', rumus: (tgl) => {
+                    const tanggal100 = new Date(tgl);
+                    let hitungBulan = 0;
+                    const tanggalAwal = new Date(tgl);
+                    while(hitungBulan < 3) {
+                        tanggalAwal.setDate(tanggalAwal.getDate() + 30);
+                        hitungBulan++;
+                        if (hitungBulan === 3) break;
+                    }
+                    tanggalAwal.setDate(tanggalAwal.getDate() + 10 - (hitungBulan * 30 - 90));
+                    return tanggalAwal;
+                }},
+                { hari: 1000, keterangan: 'Hari ke-1000', rumus: (tgl) => {
+                    const tanggal1000 = new Date(tgl);
+                    tanggal1000.setDate(tgl.getDate() + 999);
+                    return tanggal1000;
+                }}
+            ];
+
+            let hasilHTML = '<h4>Hasil Perhitungan Hari Selamatan:</h4>';
+
+            perhitungan.forEach(item => {
+                let tanggalSelamatan;
+                if (item.rumus) {
+                    tanggalSelamatan = item.rumus(tanggalMeninggal);
+                } else {
+                    tanggalSelamatan = new Date(tanggalMeninggal);
+                    tanggalSelamatan.setDate(tanggalMeninggal.getDate() + item.hari -1 );
+                }
+                const namaHariSelamatan = hari[tanggalSelamatan.getDay()];
+
+                // Hitung pasaran untuk hari selamatan
+                const patokanPasaranIndex = [4, 3, 2, 1, 0][["Wage", "Kliwon", "Legi", "Pahing", "Pon"].indexOf(namaPasaranMeninggal)];
+                let selisihHari = Math.floor((tanggalSelamatan - tanggalMeninggal) / (1000 * 60 * 60 * 24));
+                let pasaranIndex = (patokanPasaranIndex + selisihHari) % 5;
+                const namaPasaranSelamatan = pasaran[pasaranIndex];
+
+                hasilHTML += `<p>${item.keterangan}: ${namaHariSelamatan}, ${namaPasaranSelamatan} (${tanggalSelamatan.toLocaleDateString('id-ID')})</p>`;
+            });
+
+            hasilSelamatanDiv.innerHTML = hasilHTML;
+        }
+
+        function downloadPdf() {
+    const content = document.getElementById('detail');
+    const doc = new jspdf.jsPDF({
+        format: 'Ledger'
+    });
+    let y = 8; // Initial Y position for text
+    const lineHeight = 4; // Line height for text
+    const margin = 43; // Margin from the edges of the PDF
+    const defaultFontSize = 15; // Set default font size to 20
+
+    /**
+     * Adds text to the PDF document with specified style and font size.
+     * @param {string} text The text to add.
+     * @param {string} [style='normal'] Font style ('normal', 'bold', 'italic').
+     * @param {number} [fontSize=defaultFontSize] Font size for the text.
+     */
+    function addText(text, style = 'normal', fontSize = defaultFontSize) {
+        doc.setFontSize(fontSize); // Set the font size
+        const lines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - 2 * margin);
+        lines.forEach(line => {
+            doc.setFont('helvetica', 'normal'); // Always set font to normal
+            if (style === 'italic') {
+                doc.setFont('helvetica');
+            }
+            doc.text(margin, y, line);
+            y += lineHeight;
+        });
+        doc.setFont('helvetica', 'normal'); // Reset font style after each text block
+        doc.setFontSize(defaultFontSize); // Reset font size after each text block
+        y += lineHeight / 15; // Add more vertical space between paragraphs
+    }
+
+    // Iterate through the children of the 'detail' element
+    for (const element of content.children) {
+        // Handle Heading 3 elements
+        if (element.tagName === 'H3') {
+            addText(element.textContent); // Remove 'bold' style
+        }
+        // Handle Unordered List elements
+        else if (element.tagName === 'UL') {
+            for (const li of element.children) {
+                const strong = li.querySelector('strong');
+                // If list item has strong text
+                if (strong) {
+                    addText(strong.textContent + li.textContent.substring(li.textContent.indexOf(':') + 1).trim()); // Remove 'bold' style
+                }
+                // Otherwise, add as normal text
+                else {
+                    addText(li.textContent);
+                }
+            }
+        }
+        // Handle Anchor elements (links)
+        else if (element.tagName === 'A') {
+            addText(element.textContent);
+        }
+        // Handle Paragraph elements
+        else if (element.tagName === 'P') {
+            if (element.id === 'tarot-result') {
+                addText(element.textContent, 'italic');
+            } else if (!element.querySelector('span#arahRejeki')) {
+                addText(element.textContent);
+            }
+        }
+        // Handle elements with class 'wuku-detail'
+        else if (element.classList.contains('wuku-detail')) {
+            const h4 = element.querySelector('h4');
+            // Make the heading 4
+            if (h4) {
+                addText(h4.textContent); // Remove 'bold' style
+            }
+            // Iterate through paragraphs within 'wuku-detail'
+            for (const p of element.querySelectorAll('p')) {
+                const strong = p.querySelector('strong');
+                // If paragraph has strong text
+                if (strong) {
+                    addText(strong.textContent + p.textContent.substring(p.textContent.indexOf(':') + 1).trim()); // Remove 'bold' style
+                }
+                // Otherwise, add as normal text
+                else {
+                    addText(p.textContent);
+                }
+            }
+        }
+        // Handle elements with class 'ramalan-mesir'
+        else if (element.classList.contains('ramalan-mesir')) {
+            for (const child of element.children) {
+                // Make strong children
+                if (child.tagName === 'STRONG') {
+                    addText(child.textContent); // Remove 'bold' style
+                }
+                // Otherwise, add as normal text
+                else {
+                    addText(child.textContent);
+                }
+            }
+        }
+        // Handle elements with class 'neptu-detail'
+        else if (element.classList.contains('neptu-detail')) {
+            const h4 = element.querySelector('h4');
+            if (h4) {
+                addText(h4.textContent);
+            }
+            for (const p of element.querySelectorAll('p')) {
+                const strong = p.querySelector('strong');
+                if (strong) {
+                    addText(strong.textContent + p.textContent.substring(p.textContent.indexOf(':') + 1).trim());
+                } else {
+                    addText(p.textContent);
+                }
+            }
+            const table = element.querySelector('.neptu-value-table');
+            if (table) {
+                const headers = table.querySelectorAll('th');
+                const rows = table.querySelectorAll('tr');
+
+                headers.forEach(header => {
+                    addText(header.textContent); // Remove 'bold' style
+                });
+
+                rows.forEach((row, index) => {
+                    if (index > 0) { // Skip header row
+                        const cells = row.querySelectorAll('td');
+                        cells.forEach(cell => {
+                            addText(cell.textContent);
+                        });
+                    }
+                });
+            }
+        }
+        // Handle elements with class 'selamatan-section'
+        else if (element.classList.contains('selamatan-section')) {
+            const h4 = element.querySelector('h4');
+            if (h4) {
+                addText(h4.textContent);
+            }
+            for (const p of element.querySelectorAll('p')) {
+                addText(p.textContent);
+            }
+            const hasilSelamatanDiv = element.querySelector('#hasilSelamatan');
+            if (hasilSelamatanDiv && hasilSelamatanDiv.innerHTML) {
+                addText(hasilSelamatanDiv.querySelector('h4').textContent);
+                for (const p of hasilSelamatanDiv.querySelectorAll('p')) {
+                    addText(p.textContent);
+                }
+            }
+        }
+    }
+
+    doc.save(`kalender_jawa_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+        function searchDate() {
+            const inputDate = document.getElementById("dateInput").value;
+            if (!inputDate) return alert("Pilih tanggal dulu!");
+            const d = new Date(inputDate);
+            currentMonth = d.getMonth();
+            currentYear = d.getFullYear();
+            generateCalendar(currentMonth, currentYear);
+            selectedDate = d;
+            const selisihHari = Math.floor((d - new Date(2025, 3, 18)) / (24 * 60 * 60 * 1000));
+            const pasaranIndex = ((selisihHari % 5) + 5) % 5;
+            showDetail(d.getFullYear(), d.getMonth(), d.getDate(), pasaranIndex);
+        }
+
+        function changeMonth(offset) {
+            currentMonth += offset;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+            neptuKemarin = null;
+            neptuDuaHariLalu = null;
+            pancatanResultsDiv.innerHTML = '';
+            removePancatanHighlight();
+            detail.style.display = 'none';
+            selectedDate = null;
+            currentWuku = null;
+        }
+
+        function getNextDate(date, days) {
+            const nextDate = new Date(date);
+            nextDate.setDate(date.getDate() + days);
+            return nextDate;
+        }
+
+        function calculateNeptu(date) {
+            const day = date.toLocaleString('id-ID', { weekday: 'long' });
+            const pasaran = getPasaran(date);
+            const neptuHariValue = neptuHari[day];
+            const neptuPasaranValue = neptuPasaran[pasaran];
+            return neptuHariValue + neptuPasaranValue;
+        }
+
+        function findThreeDayNeptu40(startDate) {
+            const results = [];
+            const month = startDate.getMonth();
+            for (let i = 0; i < 31; i++) {
+                const date1 = getNextDate(startDate, i);
+                const date2 = getNextDate(date1, 1);
+                const date3 = getNextDate(date2, 1);
+                if (date1.getMonth() !== month || date2.getMonth() !== month || date3.getMonth() !== month) break;
+
+                const neptu1 = calculateNeptu(date1);
+                const neptu2 = calculateNeptu(date2);
+                const neptu3 = calculateNeptu(date3);
+
+                if (neptu1 + neptu2 + neptu3 === 40) {
+                    results.push({ date1, date2, date3, neptu1, neptu2, neptu3 });
+                }
+            }
+            return results;
+        }
+
+        function findThreeDayNeptu40Wrapper() {
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            const results = findThreeDayNeptu40(firstDayOfMonth);
+            const resultContainer = document.getElementById('pancatan-results');
+            resultContainer.innerHTML = '<h3>Tanggal dengan Total Neptu 40 (Pancatan):</h3>';
+            if (results.length > 0) {
+                results.forEach(result => {
+                    resultContainer.innerHTML += `
+                        <div class="output">
+                            <p>
+                                ${result.date1.toLocaleDateString('id-ID')} (${result.date1.toLocaleString('id-ID', { weekday: 'long' })}, ${getPasaran(result.date1)}): Neptu = ${result.neptu1}<br>
+                                ${result.date2.toLocaleDateString('id-ID')} (${result.date2.toLocaleString('id-ID', { weekday: 'long' })}, ${getPasaran(result.date2)}): Neptu = ${result.neptu2}<br>
+                                ${result.date3.toLocaleDateString('id-ID')} (${result.date3.toLocaleString('id-ID', { weekday: 'long' })}, ${getPasaran(result.date3)}): Neptu = ${result.neptu3}<br>
+                                Total Neptu = 40
+                            </p>
+                        </div>
+                        <hr>
+                    `;
+                    highlightPancatanDates(result.date1.getDate(), result.date2.getDate(), result.date3.getDate());
+                });
+            } else {
+                resultContainer.innerHTML += '<p>Tidak ada hasil yang ditemukan di bulan ini.</p>';
+                removePancatanHighlight();
+            }
+            if (!selectedDate) {
+                detail.style.display = 'none';
+            }
+        }
+
+        function highlightPancatanDates(tgl1, tgl2, tgl3) {
+            const day1 = document.getElementById(`day-${tgl1}`);
+            const day2 = document.getElementById(`day-${tgl2}`);
+            const day3 = document.getElementById(`day-${tgl3}`);
+            if (day1) day1.classList.add('pancatan');
+            if (day2) day2.classList.add('pancatan');
+            if (day3) day3.classList.add('pancatan');
+        }
+
+        function removePancatanHighlight() {
+            const highlighted = document.querySelectorAll('.pancatan');
+            highlighted.forEach(element => {
+                element.classList.remove('pancatan');
+            });
+        }
+
+        function calculateLifePathNumber(year, month, day) {
+            const yearSum = String(year).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+            const monthSum = String(month).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+            const daySum = String(day).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+
+            const initialSum = yearSum + monthSum + daySum;
+            const finalSum = String(initialSum).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+            return finalSum;
+        }
+
+        function getNumerologyExplanation(number) {
+            switch (number) {
+                case 1: return "Seorang pemimpin alami, mandiri, dan inovatif.";
+                case 2: return "Kooperatif, sensitif, dan membawa harmoni dalam hubungan.";
+                case 3: return "Kreatif, ekspresif, dan menikmati hidup dengan penuh semangat.";
+                case 4: return "Praktis, terorganisir, dan memiliki fondasi yang kuat.";
+                case 5: return "Bebas, petualang, dan menyukai perubahan.";
+                case 6: return "Bertanggung jawab, penyayang, dan fokus pada keluarga dan komunitas.";
+                case 7: return "Intuitif, analitis, dan mencari pemahaman yang mendalam.";
+                case 8: return "Ambisius, berorientasi pada kesuksesan, dan memiliki kemampuan kepemimpinan yang kuat.";
+                case 9: return "Penuh kasih sayang, idealis, dan memiliki keinginan untuk membantu orang lain.";
+                default: return "Penjelasan untuk angka ini belum tersedia.";
+            }
+        }
+
+        function setInitialTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('timeInput').value = `${hours}:${minutes}`;
+        }
+
+        generateCalendar(currentMonth, currentYear);
+        setInitialTime();
+        getRandomTarotReading();
+        // showDetail(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()); // Tampilkan detail hari ini termasuk tarot
+    </script>
+
+
+
+<script>
+    const users = {
+        'user1': 'pass1',
+        'user2': 'pass2',
+        'user3': 'pass3',
+        'user4': 'pass4',
+        'admin': 'admin'
+    };
+    let currentUser = '';
+
+
+    </script>
+<button id="scrollTopBtn" title="Kembali ke atas">&#9650</button>
+<style>
+  .searched-day {
+    border: 3px solid blue !important;
+  }
+  #scrollTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 99;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    background-color: #3B5998;
+    color: white;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 10px;
+  }
+  #scrollTopBtn:hover {
+    background-color: #333;
+  }
+</style>
+<script>
+  // Scroll to top button
+  window.onscroll = function() {
+    const scrollBtn = document.getElementById("scrollTopBtn");
+    scrollBtn.style.display = (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) ? "block" : "none";
+  };
+  document.addEventListener("DOMContentLoaded", function() {
+    const btn = document.getElementById("scrollTopBtn");
+    if (btn) {
+      btn.onclick = function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+    }
+  });
+  
+  if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('Service Worker registered! Scope:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.log('Service Worker registration failed:', err);
+                    });
+            });
+        }
+    </script>
+
+</body>
+</html>
